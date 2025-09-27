@@ -15,7 +15,7 @@ class SeedRunner {
 
   constructor() {
     this.dataSource = new DataSource({
-      type: process.env.DB_TYPE as any || 'postgres',
+      type: (process.env.DB_TYPE as any) || 'postgres',
       host: process.env.DB_HOST || 'localhost',
       port: parseInt(process.env.DB_PORT!) || 5470,
       username: process.env.DB_USER || 'postgres',
@@ -50,22 +50,21 @@ class SeedRunner {
       if (existingCementerios > 0) {
         console.log('⚠️  Ya existen cementerios en la base de datos');
         const proceed = process.argv.includes('--force');
-        
+
         if (!proceed) {
           console.log('💡 Usa --force para ejecutar de todas formas');
           console.log('   Ejemplo: npm run seed --force');
           return;
         }
-        
+
         console.log('🔄 Ejecutando seed con --force...');
       }
 
       console.log('🌱 Iniciando proceso de seeds...');
-      
+
       await runCementerioSeed(this.dataSource);
-      
+
       console.log('🎉 ¡Seeds ejecutados exitosamente!');
-      
     } catch (error) {
       console.error('❌ Error ejecutando seeds:', error);
       throw error;
@@ -80,7 +79,8 @@ class SeedRunner {
 
 if (require.main === module) {
   const runner = new SeedRunner();
-  runner.run()
+  runner
+    .run()
     .then(() => {
       console.log('Proceso completado');
       process.exit(0);

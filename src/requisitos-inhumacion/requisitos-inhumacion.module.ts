@@ -10,10 +10,16 @@ import { Inhumacion } from 'src/inhumaciones/entities/inhumacion.entity';
 import { SharedModule } from 'src/shared/shared.module';
 import { Nicho } from 'src/nicho/entities/nicho.entity';
 
-
 @Module({
   imports: [
-    TypeOrmModule.forFeature([RequisitosInhumacion, Persona, HuecosNicho, Cementerio, Inhumacion, Nicho]),
+    TypeOrmModule.forFeature([
+      RequisitosInhumacion,
+      Persona,
+      HuecosNicho,
+      Cementerio,
+      Inhumacion,
+      Nicho,
+    ]),
     SharedModule,
   ],
   controllers: [RequisitosInhumacionController],

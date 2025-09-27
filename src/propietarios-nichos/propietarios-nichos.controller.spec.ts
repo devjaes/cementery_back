@@ -11,7 +11,9 @@ describe('PropietariosNichosController', () => {
       providers: [PropietariosNichosService],
     }).compile();
 
-    controller = module.get<PropietariosNichosController>(PropietariosNichosController);
+    controller = module.get<PropietariosNichosController>(
+      PropietariosNichosController,
+    );
   });
 
   it('should be defined', () => {

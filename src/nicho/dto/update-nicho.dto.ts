@@ -10,7 +10,7 @@ export class UpdateNichoDto extends PartialType(CreateNichoDto) {
     description: 'ID único del nicho a actualizar',
     example: '123e4567-e89b-12d3-a456-426614174000',
     format: 'uuid',
-    required: true
+    required: true,
   })
   @IsString()
   @IsNotEmpty()

@@ -1,6 +1,17 @@
 // src/nichos/entities/nicho.entity.ts
 import { Cementerio } from 'src/cementerio/entities/cementerio.entity';
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, BeforeInsert, BeforeUpdate, ManyToOne, JoinColumn, OneToMany } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  UpdateDateColumn,
+  BeforeInsert,
+  BeforeUpdate,
+  ManyToOne,
+  JoinColumn,
+  OneToMany,
+} from 'typeorm';
 import { Exumacion } from 'src/exumacion/entities/exumacion.entity';
 import { Inhumacion } from 'src/inhumaciones/entities/inhumacion.entity';
 import { PropietarioNicho } from 'src/propietarios-nichos/entities/propietarios-nicho.entity';
@@ -11,7 +22,9 @@ export class Nicho {
   @PrimaryGeneratedColumn('uuid')
   id_nicho: string;
 
-  @ManyToOne(() => Cementerio, (cementerio) => cementerio.nichos, { eager: true })
+  @ManyToOne(() => Cementerio, (cementerio) => cementerio.nichos, {
+    eager: true,
+  })
   @JoinColumn({ name: 'id_cementerio' })
   id_cementerio: Cementerio;
 
@@ -33,12 +46,11 @@ export class Nicho {
   @Column({ type: 'int', name: 'num_huecos' })
   num_huecos: number;
 
-  @Column({ type: 'varchar', name: 'fecha_construccion'})
+  @Column({ type: 'varchar', name: 'fecha_construccion' })
   fecha_construccion: string;
 
   // @Column({ type: 'date', nullable: true })
   // fecha_adquisicion?: Date
-
 
   @Column({ type: 'text', nullable: true })
   observaciones?: string;
@@ -55,7 +67,10 @@ export class Nicho {
   @OneToMany(() => Inhumacion, (inhumacion) => inhumacion.id_nicho)
   inhumaciones: Inhumacion[];
 
-  @OneToMany(() => PropietarioNicho, (propietarioNicho) => propietarioNicho.id_nicho)
+  @OneToMany(
+    () => PropietarioNicho,
+    (propietarioNicho) => propietarioNicho.id_nicho,
+  )
   propietarios_nicho: PropietarioNicho[];
 
   @OneToMany(() => HuecosNicho, (hueco) => hueco.id_nicho)
@@ -75,5 +90,4 @@ export class Nicho {
   async setFechaActualizacion() {
     this.fecha_actualizacion = new Date().toISOString();
   }
-
 }

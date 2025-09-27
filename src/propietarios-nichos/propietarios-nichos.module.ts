@@ -11,6 +11,5 @@ import { Nicho } from 'src/nicho/entities/nicho.entity'; // Importa la entidad N
   controllers: [PropietariosNichosController],
   providers: [PropietariosNichosService],
   exports: [PropietariosNichosService], // Exporta el servicio si es necesario en otros módulos
-
 })
 export class PropietariosNichosModule {}

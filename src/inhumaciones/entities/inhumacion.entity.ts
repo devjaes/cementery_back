@@ -3,7 +3,19 @@ import { Exumacion } from 'src/exumacion/entities/exumacion.entity';
 import { Nicho } from 'src/nicho/entities/nicho.entity';
 import { Persona } from 'src/personas/entities/persona.entity';
 import { RequisitosInhumacion } from 'src/requisitos-inhumacion/entities/requisitos-inhumacion.entity';
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, BeforeInsert, BeforeUpdate, ManyToOne, JoinColumn, OneToMany, OneToOne } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  UpdateDateColumn,
+  BeforeInsert,
+  BeforeUpdate,
+  ManyToOne,
+  JoinColumn,
+  OneToMany,
+  OneToOne,
+} from 'typeorm';
 
 @Entity('inhumaciones')
 export class Inhumacion {
@@ -49,7 +61,7 @@ export class Inhumacion {
 
   @Column('date', { nullable: true })
   fecha_actualizacion: string;
-  
+
   @OneToMany(() => Exumacion, (exumacion) => exumacion.id_inhumacion)
   exumaciones: Exumacion[];
 
@@ -70,4 +82,3 @@ export class Inhumacion {
     this.fecha_actualizacion = new Date().toISOString().split('T')[0];
   }
 }
-

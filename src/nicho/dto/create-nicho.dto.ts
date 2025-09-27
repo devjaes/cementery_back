@@ -1,5 +1,17 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsNotEmpty, IsString, IsInt, IsDateString, IsOptional, IsUUID, MaxLength, Min, Max, Length, IsDate } from 'class-validator';
+import {
+  IsNotEmpty,
+  IsString,
+  IsInt,
+  IsDateString,
+  IsOptional,
+  IsUUID,
+  MaxLength,
+  Min,
+  Max,
+  Length,
+  IsDate,
+} from 'class-validator';
 import { Cementerio } from 'src/cementerio/entities/cementerio.entity';
 import { DeepPartial } from 'typeorm';
 
@@ -8,7 +20,7 @@ export class CreateNichoDto {
     description: 'ID del cementerio al que pertenece el nicho',
     example: '123e4567-e89b-12d3-a456-426614174000',
     format: 'uuid',
-    required: true
+    required: true,
   })
   @IsNotEmpty()
   @IsUUID()
@@ -19,7 +31,7 @@ export class CreateNichoDto {
     example: 'A',
     minLength: 1,
     maxLength: 2,
-    required: true
+    required: true,
   })
   @IsString()
   @IsNotEmpty()
@@ -31,7 +43,7 @@ export class CreateNichoDto {
     example: '1',
     minLength: 1,
     maxLength: 3,
-    required: true
+    required: true,
   })
   @IsString()
   @IsNotEmpty()
@@ -43,7 +55,7 @@ export class CreateNichoDto {
     example: '15',
     minLength: 1,
     maxLength: 4,
-    required: true
+    required: true,
   })
   @IsString()
   @IsNotEmpty()
@@ -54,7 +66,7 @@ export class CreateNichoDto {
     description: 'Tipo de nicho',
     enum: ['Nicho', 'Mausoleo', 'Fosa'],
     example: 'Individual',
-    required: true
+    required: true,
   })
   @IsString()
   @IsNotEmpty()
@@ -65,7 +77,7 @@ export class CreateNichoDto {
     type: 'string',
     format: 'date',
     example: '2023-01-01',
-    required: true
+    required: true,
   })
   @IsDateString()
   @IsNotEmpty()
@@ -76,29 +88,29 @@ export class CreateNichoDto {
     type: 'string',
     format: 'date',
     example: '2023-01-01',
-    required: true
+    required: true,
   })
   // @IsDate()
   // @IsOptional()
   // fecha_adquisicion?: Date;
-
   @ApiPropertyOptional({
     description: 'Observaciones adicionales sobre el nicho',
     example: 'Construido recientemente con mármol importado',
-    required: false
+    required: false,
   })
   @IsString()
   @IsOptional()
-  @MaxLength(500, { message: 'Las observaciones no deben exceder los 500 caracteres' })
+  @MaxLength(500, {
+    message: 'Las observaciones no deben exceder los 500 caracteres',
+  })
   observaciones?: string;
 
   @ApiProperty({
     description: 'Cantidad de huecos del nicho',
     example: 2,
-    required: true
+    required: true,
   })
   @IsInt()
   @IsNotEmpty()
   num_huecos: number;
-
 }

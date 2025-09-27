@@ -1,4 +1,10 @@
-import { Column, Entity, PrimaryGeneratedColumn, ManyToOne, JoinColumn } from 'typeorm';
+import {
+  Column,
+  Entity,
+  PrimaryGeneratedColumn,
+  ManyToOne,
+  JoinColumn,
+} from 'typeorm';
 import { Nicho } from 'src/nicho/entities/nicho.entity';
 import { Inhumacion } from 'src/inhumaciones/entities/inhumacion.entity';
 
@@ -7,7 +13,9 @@ export class Exumacion {
   @PrimaryGeneratedColumn('uuid')
   id_exhumacion: string;
 
-  @ManyToOne(() => Inhumacion, (inhumacion) => inhumacion.exumaciones, { eager: true })
+  @ManyToOne(() => Inhumacion, (inhumacion) => inhumacion.exumaciones, {
+    eager: true,
+  })
   @JoinColumn({ name: 'id_inhumacion' })
   id_inhumacion: Inhumacion;
 

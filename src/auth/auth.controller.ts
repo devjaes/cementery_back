@@ -1,5 +1,12 @@
 import { UserService } from './../user/user.service';
-import { Body, Controller, Post, Request, UseGuards, BadRequestException } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Post,
+  Request,
+  UseGuards,
+  BadRequestException,
+} from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { Cementerio } from 'src/cementerio/entities/cementerio.entity';
 import { JwtAuthGuard } from './jwt-auth.guard';
@@ -11,7 +18,7 @@ import {
   ApiBearerAuth,
   ApiUnauthorizedResponse,
   ApiOkResponse,
-  ApiBadRequestResponse
+  ApiBadRequestResponse,
 } from '@nestjs/swagger';
 
 @ApiTags('Autenticación')
@@ -36,12 +43,22 @@ export class AuthController {
         apellido: { type: 'string', example: 'Pérez' },
         password: { type: 'string', example: 'Password123' },
         rol: { type: 'string', example: 'user' },
-      }
-    }
+      },
+    },
   })
   @ApiOkResponse({ description: 'Usuario registrado exitosamente' })
   @ApiBadRequestResponse({ description: 'Datos inválidos' })
-  async register(@Body() body: {cedula: string, email:string, nombre:string, apellido:string, password: string, rol:string}) {
+  async register(
+    @Body()
+    body: {
+      cedula: string;
+      email: string;
+      nombre: string;
+      apellido: string;
+      password: string;
+      rol: string;
+    },
+  ) {
     return this.userService.create(body);
   }
 
@@ -53,22 +70,25 @@ export class AuthController {
       type: 'object',
       properties: {
         cedula: { type: 'string', example: '1234567890' },
-        password: { type: 'string', example: 'Password123' }
-      }
-    }
+        password: { type: 'string', example: 'Password123' },
+      },
+    },
   })
-  @ApiOkResponse({ 
+  @ApiOkResponse({
     description: 'Inicio de sesión exitoso',
     schema: {
       type: 'object',
       properties: {
-        access_token: { type: 'string' }
-      }
-    }
+        access_token: { type: 'string' },
+      },
+    },
   })
   @ApiUnauthorizedResponse({ description: 'Credenciales inválidas' })
-  async login(@Body() body: { cedula: string, password: string }) {
-    const user = await this.userService.validateUser(body.cedula, body.password);
+  async login(@Body() body: { cedula: string; password: string }) {
+    const user = await this.userService.validateUser(
+      body.cedula,
+      body.password,
+    );
     if (!user) {
       throw new BadRequestException('Usuario o contraseña incorrectos');
     }
@@ -82,7 +102,10 @@ export class AuthController {
   @ApiOkResponse({ description: 'Sesión cerrada correctamente' })
   @ApiUnauthorizedResponse({ description: 'No autorizado' })
   async logout(@Request() req) {
-    await this.authService.logout(req.user.cedula, req.headers.authorization.split(' ')[1]);
+    await this.authService.logout(
+      req.user.cedula,
+      req.headers.authorization.split(' ')[1],
+    );
     return { message: 'Sesión cerrada correctamente' };
   }
 

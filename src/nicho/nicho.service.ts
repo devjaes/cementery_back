@@ -258,8 +258,6 @@ export class NichoService {
           });
         }
 
-        
-
         const nichosDuenos = await this.nichoRepository
           .createQueryBuilder('nicho')
           .leftJoinAndSelect('nicho.propietarios_nicho', 'propietario')
@@ -281,12 +279,11 @@ export class NichoService {
           // console.log(huecosDuenos);
 
           for (const huecoDueno of huecosDuenos) {
-
             const huecos = await this.huecosNichoRepository.find({
               where: { id_detalle_hueco: huecoDueno.id_detalle_hueco },
               relations: ['id_nicho', 'id_nicho.id_cementerio'],
             });
-    
+
             let fallecido1: Persona | null = null;
             if (huecoDueno.id_fallecido) {
               fallecido1 = await this.personaRepository.findOne({
@@ -295,12 +292,11 @@ export class NichoService {
               resultados.push({
                 fallecido: fallecido1,
                 huecos: huecos,
-            nichos: huecos.map((h) => h.id_nicho),
-            cementerios: huecos.map((h) => h.id_nicho?.id_cementerio),
+                nichos: huecos.map((h) => h.id_nicho),
+                cementerios: huecos.map((h) => h.id_nicho?.id_cementerio),
               });
             }
-            }
-           
+          }
         }
       }
 
@@ -310,8 +306,12 @@ export class NichoService {
         );
       }
 
-      const sinDuplicados = resultados.filter((resultado, index, self) =>
-        index === self.findIndex((t) => t.fallecido.id_persona === resultado.fallecido.id_persona),
+      const sinDuplicados = resultados.filter(
+        (resultado, index, self) =>
+          index ===
+          self.findIndex(
+            (t) => t.fallecido.id_persona === resultado.fallecido.id_persona,
+          ),
       );
 
       return {

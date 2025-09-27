@@ -162,7 +162,9 @@ export class PersonasService {
       ) {
         throw error;
       }
-      throw new InternalServerErrorException('Error al crear la persona: ' + (error.message || error));
+      throw new InternalServerErrorException(
+        'Error al crear la persona: ' + (error.message || error),
+      );
     }
   }
 
@@ -173,7 +175,9 @@ export class PersonasService {
     try {
       return this.personaRepo.find();
     } catch (error) {
-      throw new InternalServerErrorException('Error al obtener personas: ' + (error.message || error));
+      throw new InternalServerErrorException(
+        'Error al obtener personas: ' + (error.message || error),
+      );
     }
   }
 
@@ -191,7 +195,9 @@ export class PersonasService {
       return persona;
     } catch (error) {
       if (error instanceof NotFoundException) throw error;
-      throw new InternalServerErrorException('Error al buscar la persona: ' + (error.message || error));
+      throw new InternalServerErrorException(
+        'Error al buscar la persona: ' + (error.message || error),
+      );
     }
   }
 
@@ -227,7 +233,9 @@ export class PersonasService {
 
       return await queryBuilder.getMany();
     } catch (error) {
-      throw new InternalServerErrorException('Error al buscar personas: ' + (error.message || error));
+      throw new InternalServerErrorException(
+        'Error al buscar personas: ' + (error.message || error),
+      );
     }
   }
 
@@ -236,12 +244,8 @@ export class PersonasService {
    */
   async update(id: string, dto: UpdatePersonaDto) {
     try {
-
       // Validar cédula o RUC
-      if (
-        !dto.cedula ||
-        !this.validarCedula(dto.cedula)
-      ) {
+      if (!dto.cedula || !this.validarCedula(dto.cedula)) {
         throw new BadRequestException('Cédula inválida');
       }
 
@@ -253,7 +257,6 @@ export class PersonasService {
         throw new ConflictException('Ya existe una persona con esta cédula');
       }
 
-
       const persona = await this.personaRepo.findOne({
         where: { id_persona: id },
       });
@@ -263,7 +266,9 @@ export class PersonasService {
 
       // No permitir cambiar de fallecido:true a fallecido:false
       if (persona.fallecido === true && dto.fallecido === false) {
-        throw new BadRequestException('No se puede cambiar una persona fallecida a viva');
+        throw new BadRequestException(
+          'No se puede cambiar una persona fallecida a viva',
+        );
       }
 
       // Validaciones si se actualiza a fallecido
@@ -318,8 +323,14 @@ export class PersonasService {
       this.personaRepo.merge(persona, dto);
       return await this.personaRepo.save(persona);
     } catch (error) {
-      if (error instanceof NotFoundException || error instanceof BadRequestException) throw error;
-      throw new InternalServerErrorException('Error al actualizar la persona: ' + (error.message || error));
+      if (
+        error instanceof NotFoundException ||
+        error instanceof BadRequestException
+      )
+        throw error;
+      throw new InternalServerErrorException(
+        'Error al actualizar la persona: ' + (error.message || error),
+      );
     }
   }
 
@@ -337,7 +348,9 @@ export class PersonasService {
       return await this.personaRepo.remove(persona);
     } catch (error) {
       if (error instanceof NotFoundException) throw error;
-      throw new InternalServerErrorException('Error al eliminar la persona: ' + (error.message || error));
+      throw new InternalServerErrorException(
+        'Error al eliminar la persona: ' + (error.message || error),
+      );
     }
   }
 }

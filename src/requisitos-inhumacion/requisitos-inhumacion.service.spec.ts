@@ -9,7 +9,9 @@ describe('RequisitosInhumacionService', () => {
       providers: [RequisitosInhumacionService],
     }).compile();
 
-    service = module.get<RequisitosInhumacionService>(RequisitosInhumacionService);
+    service = module.get<RequisitosInhumacionService>(
+      RequisitosInhumacionService,
+    );
   });
 
   it('should be defined', () => {

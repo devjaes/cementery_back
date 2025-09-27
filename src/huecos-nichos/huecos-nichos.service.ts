@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException, InternalServerErrorException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import { CreateHuecosNichoDto } from './dto/create-huecos-nicho.dto';
 import { UpdateHuecosNichoDto } from './dto/update-huecos-nicho.dto';
 import { HuecosNicho } from './entities/huecos-nicho.entity';
@@ -8,8 +12,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 @Injectable()
 export class HuecosNichosService {
   @InjectRepository(HuecosNicho)
-  private readonly huecoRepository: Repository<HuecosNicho>
-  constructor() { }
+  private readonly huecoRepository: Repository<HuecosNicho>;
+  constructor() {}
 
   /**
    * Crea un nuevo hueco para un nicho
@@ -18,18 +22,27 @@ export class HuecosNichosService {
     try {
       // Normalizar id_nicho si llega como string
       if (typeof createHuecosNichoDto.id_nicho === 'string') {
-        createHuecosNichoDto.id_nicho = { id_nicho: createHuecosNichoDto.id_nicho };
+        createHuecosNichoDto.id_nicho = {
+          id_nicho: createHuecosNichoDto.id_nicho,
+        };
       }
 
       // Normalizar id_fallecido si llega como string (opcional)
-      if (createHuecosNichoDto.id_fallecido && typeof createHuecosNichoDto.id_fallecido === 'string') {
-        createHuecosNichoDto.id_fallecido = { id_persona: createHuecosNichoDto.id_fallecido };
+      if (
+        createHuecosNichoDto.id_fallecido &&
+        typeof createHuecosNichoDto.id_fallecido === 'string'
+      ) {
+        createHuecosNichoDto.id_fallecido = {
+          id_persona: createHuecosNichoDto.id_fallecido,
+        };
       }
 
       // Obtener el número de huecos existentes para el nicho y asignar el siguiente número
       const count = await this.huecoRepository
         .createQueryBuilder('hueco')
-        .where('hueco.id_nicho = :id_nicho', { id_nicho: createHuecosNichoDto.id_nicho.id_nicho })
+        .where('hueco.id_nicho = :id_nicho', {
+          id_nicho: createHuecosNichoDto.id_nicho.id_nicho,
+        })
         .getCount();
       createHuecosNichoDto.num_hueco = count + 1;
 
@@ -41,7 +54,9 @@ export class HuecosNichosService {
       const nichoRepo = this.huecoRepository.manager.getRepository('Nicho');
       const nicho = await nichoRepo
         .createQueryBuilder('nicho')
-        .where('nicho.id_nicho = :id_nicho', { id_nicho: createHuecosNichoDto.id_nicho.id_nicho })
+        .where('nicho.id_nicho = :id_nicho', {
+          id_nicho: createHuecosNichoDto.id_nicho.id_nicho,
+        })
         .getOne();
       if (nicho) {
         nicho.num_huecos = count + 1;
@@ -52,7 +67,9 @@ export class HuecosNichosService {
         hueco: savedHueco,
       };
     } catch (error) {
-      throw new InternalServerErrorException('Error al crear el hueco del nicho: ' + (error.message || error));
+      throw new InternalServerErrorException(
+        'Error al crear el hueco del nicho: ' + (error.message || error),
+      );
     }
   }
 
@@ -61,17 +78,21 @@ export class HuecosNichosService {
    */
   findAll() {
     try {
-      return this.huecoRepository.find({
-        relations: ['id_nicho', 'id_fallecido'],
-      }).then(huecos =>
-        huecos.map(h => ({
-          ...h,
-          nicho: h.id_nicho,
-          fallecido: h.id_fallecido,
-        }))
-      );
+      return this.huecoRepository
+        .find({
+          relations: ['id_nicho', 'id_fallecido'],
+        })
+        .then((huecos) =>
+          huecos.map((h) => ({
+            ...h,
+            nicho: h.id_nicho,
+            fallecido: h.id_fallecido,
+          })),
+        );
     } catch (error) {
-      throw new InternalServerErrorException('Error al obtener los huecos del nicho: ' + (error.message || error));
+      throw new InternalServerErrorException(
+        'Error al obtener los huecos del nicho: ' + (error.message || error),
+      );
     }
   }
 
@@ -84,13 +105,16 @@ export class HuecosNichosService {
         where: { estado: 'Disponible' },
         relations: ['id_nicho', 'id_fallecido'],
       });
-      return huecos.map(h => ({
+      return huecos.map((h) => ({
         ...h,
         nicho: h.id_nicho,
         fallecido: h.id_fallecido,
       }));
     } catch (error) {
-      throw new InternalServerErrorException('Error al obtener los huecos disponibles del nicho: ' + (error.message || error));
+      throw new InternalServerErrorException(
+        'Error al obtener los huecos disponibles del nicho: ' +
+          (error.message || error),
+      );
     }
   }
 
@@ -99,7 +123,10 @@ export class HuecosNichosService {
    */
   async findOne(id: string) {
     try {
-      const hueco = await this.huecoRepository.findOne({ where: { id_detalle_hueco: id }, relations: ['id_nicho', 'id_fallecido'] });
+      const hueco = await this.huecoRepository.findOne({
+        where: { id_detalle_hueco: id },
+        relations: ['id_nicho', 'id_fallecido'],
+      });
       if (!hueco) {
         throw new NotFoundException(`Hueco con ID ${id} no encontrado`);
       }
@@ -114,7 +141,9 @@ export class HuecosNichosService {
       };
     } catch (error) {
       if (error instanceof NotFoundException) throw error;
-      throw new InternalServerErrorException('Error al buscar el hueco del nicho: ' + (error.message || error));
+      throw new InternalServerErrorException(
+        'Error al buscar el hueco del nicho: ' + (error.message || error),
+      );
     }
   }
 
@@ -129,7 +158,7 @@ export class HuecosNichosService {
         .leftJoinAndSelect('hueco.id_fallecido', 'fallecido')
         .where('nicho.id_nicho = :id_nicho', { id_nicho })
         .getMany();
-      return huecos.map(h => ({
+      return huecos.map((h) => ({
         hueco: {
           ...h,
         },
@@ -137,7 +166,9 @@ export class HuecosNichosService {
         fallecido: h.id_fallecido,
       }));
     } catch (error) {
-      throw new InternalServerErrorException('Error al buscar los huecos por nicho: ' + (error.message || error));
+      throw new InternalServerErrorException(
+        'Error al buscar los huecos por nicho: ' + (error.message || error),
+      );
     }
   }
 
@@ -156,7 +187,9 @@ export class HuecosNichosService {
       };
     } catch (error) {
       if (error instanceof NotFoundException) throw error;
-      throw new InternalServerErrorException('Error al actualizar el hueco del nicho: ' + (error.message || error));
+      throw new InternalServerErrorException(
+        'Error al actualizar el hueco del nicho: ' + (error.message || error),
+      );
     }
   }
 
@@ -172,7 +205,9 @@ export class HuecosNichosService {
       return { deleted: true, id };
     } catch (error) {
       if (error instanceof NotFoundException) throw error;
-      throw new InternalServerErrorException('Error al eliminar el hueco del nicho: ' + (error.message || error));
+      throw new InternalServerErrorException(
+        'Error al eliminar el hueco del nicho: ' + (error.message || error),
+      );
     }
   }
 
@@ -183,12 +218,15 @@ export class HuecosNichosService {
         .leftJoinAndSelect('hueco.id_nicho', 'nicho')
         .where('nicho.id_cementerio = :id_cementerio', { id_cementerio })
         .getMany();
-      return huecos.map(h => ({
+      return huecos.map((h) => ({
         ...h,
         nicho: h.id_nicho,
       }));
     } catch (error) {
-      throw new InternalServerErrorException('Error al obtener los huecos disponibles por cementerio: ' + (error.message || error));
+      throw new InternalServerErrorException(
+        'Error al obtener los huecos disponibles por cementerio: ' +
+          (error.message || error),
+      );
     }
   }
 }

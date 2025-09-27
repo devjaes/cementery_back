@@ -1,4 +1,10 @@
-import { Injectable, BadRequestException, ConflictException, NotFoundException, InternalServerErrorException } from '@nestjs/common';
+import {
+  Injectable,
+  BadRequestException,
+  ConflictException,
+  NotFoundException,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -8,7 +14,9 @@ import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class UserService {
-  constructor(@InjectRepository(User) private readonly userRepository: Repository<User>) {
+  constructor(
+    @InjectRepository(User) private readonly userRepository: Repository<User>,
+  ) {
     console.log('UserService initialized');
   }
 
@@ -67,7 +75,9 @@ export class UserService {
 
       // Validar formato de cédula o RUC
       if (!esCedula && !esRuc) {
-        throw new BadRequestException('El número ingresado no es una cédula ni un RUC válido');
+        throw new BadRequestException(
+          'El número ingresado no es una cédula ni un RUC válido',
+        );
       }
       // Verificar si el usuario ya existe
       if (
@@ -80,7 +90,9 @@ export class UserService {
 
       // Validar correo electrónico
       if (!email || !this.validarEmail(email)) {
-        throw new BadRequestException('Debe ingresar un correo electrónico válido');
+        throw new BadRequestException(
+          'Debe ingresar un correo electrónico válido',
+        );
       }
 
       // Crear y guardar el usuario
@@ -93,7 +105,9 @@ export class UserService {
       ) {
         throw error;
       }
-      throw new InternalServerErrorException('Error al crear el usuario: ' + (error.message || error));
+      throw new InternalServerErrorException(
+        'Error al crear el usuario: ' + (error.message || error),
+      );
     }
   }
 
@@ -102,11 +116,13 @@ export class UserService {
    */
   findAll() {
     try {
-      return this.userRepository.find().then(users =>
-        users.map(({ password, ...rest }) => rest)
-      );
+      return this.userRepository
+        .find()
+        .then((users) => users.map(({ password, ...rest }) => rest));
     } catch (error) {
-      throw new InternalServerErrorException('Error al obtener los usuarios: ' + (error.message || error));
+      throw new InternalServerErrorException(
+        'Error al obtener los usuarios: ' + (error.message || error),
+      );
     }
   }
 
@@ -115,7 +131,9 @@ export class UserService {
    */
   async findOne(id: string) {
     try {
-      const user = await this.userRepository.findOne({ where: { id_user: id } });
+      const user = await this.userRepository.findOne({
+        where: { id_user: id },
+      });
       if (!user) {
         throw new NotFoundException('User not found');
       }
@@ -126,7 +144,9 @@ export class UserService {
       if (error instanceof NotFoundException) {
         throw error;
       }
-      throw new InternalServerErrorException('Error al buscar el usuario: ' + (error.message || error));
+      throw new InternalServerErrorException(
+        'Error al buscar el usuario: ' + (error.message || error),
+      );
     }
   }
 
@@ -135,7 +155,9 @@ export class UserService {
    */
   async update(id: string, updateUserDto: UpdateUserDto) {
     try {
-      const user = await this.userRepository.findOne({ where: { id_user: id } });
+      const user = await this.userRepository.findOne({
+        where: { id_user: id },
+      });
       if (!user) {
         throw new NotFoundException('User not found');
       }
@@ -145,7 +167,9 @@ export class UserService {
       if (error instanceof NotFoundException) {
         throw error;
       }
-      throw new InternalServerErrorException('Error al actualizar el usuario: ' + (error.message || error));
+      throw new InternalServerErrorException(
+        'Error al actualizar el usuario: ' + (error.message || error),
+      );
     }
   }
 
@@ -154,7 +178,9 @@ export class UserService {
    */
   async remove(id: string) {
     try {
-      const user = await this.userRepository.findOne({ where: { id_user: id } });
+      const user = await this.userRepository.findOne({
+        where: { id_user: id },
+      });
       if (!user) {
         throw new NotFoundException('User not found');
       }
@@ -163,7 +189,9 @@ export class UserService {
       if (error instanceof NotFoundException) {
         throw error;
       }
-      throw new InternalServerErrorException('Error al eliminar el usuario: ' + (error.message || error));
+      throw new InternalServerErrorException(
+        'Error al eliminar el usuario: ' + (error.message || error),
+      );
     }
   }
 
@@ -172,13 +200,17 @@ export class UserService {
    */
   async validateUser(username: string, pass: string): Promise<User | any> {
     try {
-      const user = await this.userRepository.findOne({ where: { cedula: username } });
+      const user = await this.userRepository.findOne({
+        where: { cedula: username },
+      });
       if (user && (await bcrypt.compare(pass, user.password))) {
         return user;
       }
       return null;
     } catch (error) {
-      throw new InternalServerErrorException('Error en la validación de usuario: ' + (error.message || error));
+      throw new InternalServerErrorException(
+        'Error en la validación de usuario: ' + (error.message || error),
+      );
     }
   }
 
@@ -187,7 +219,9 @@ export class UserService {
    */
   async findByCedula(cedula: string) {
     try {
-      const user = await this.userRepository.findOne({ where: { cedula: cedula } });
+      const user = await this.userRepository.findOne({
+        where: { cedula: cedula },
+      });
       if (!user) {
         throw new NotFoundException('User not found');
       }
@@ -198,7 +232,9 @@ export class UserService {
       if (error instanceof NotFoundException) {
         throw error;
       }
-      throw new InternalServerErrorException('Error al buscar el usuario: ' + (error.message || error));
+      throw new InternalServerErrorException(
+        'Error al buscar el usuario: ' + (error.message || error),
+      );
     }
   }
 }

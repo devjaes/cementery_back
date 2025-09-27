@@ -20,17 +20,23 @@ export class CreateRequisitosInhumacionDto {
   // A) Datos institucionales
   @ApiProperty({
     description: 'Cementerio donde se realiza la inhumación',
-    example: { id_cementerio: 'uuid-cementerio'},
+    example: { id_cementerio: 'uuid-cementerio' },
   })
   @IsNotEmpty()
   id_cementerio: DeepPartial<Cementerio>;
 
-  @ApiProperty({ example: 'Juan Pérez', description: 'Nombre del pantonero a cargo' })
+  @ApiProperty({
+    example: 'Juan Pérez',
+    description: 'Nombre del pantonero a cargo',
+  })
   @IsString()
   pantoneroACargo: string;
 
   // B) Método de solicitud
-  @ApiPropertyOptional({ enum: MetodoSolicitud, default: MetodoSolicitud.ESCRITA })
+  @ApiPropertyOptional({
+    enum: MetodoSolicitud,
+    default: MetodoSolicitud.ESCRITA,
+  })
   @IsEnum(MetodoSolicitud)
   @IsOptional()
   metodoSolicitud?: MetodoSolicitud;
@@ -53,7 +59,9 @@ export class CreateRequisitosInhumacionDto {
   @IsBoolean()
   copiaCertificadoDefuncion: boolean;
 
-  @ApiPropertyOptional({ example: 'Observación sobre el certificado de defunción' })
+  @ApiPropertyOptional({
+    example: 'Observación sobre el certificado de defunción',
+  })
   @IsString()
   @IsOptional()
   observacionCertificadoDefuncion?: string;
@@ -62,7 +70,9 @@ export class CreateRequisitosInhumacionDto {
   @IsBoolean()
   informeEstadisticoINEC: boolean;
 
-  @ApiPropertyOptional({ example: 'Observación sobre el informe estadístico INEC' })
+  @ApiPropertyOptional({
+    example: 'Observación sobre el informe estadístico INEC',
+  })
   @IsString()
   @IsOptional()
   observacionInformeEstadisticoINEC?: string;
@@ -80,7 +90,9 @@ export class CreateRequisitosInhumacionDto {
   @IsBoolean()
   pagoTasaInhumacion: boolean;
 
-  @ApiPropertyOptional({ example: 'Observación sobre el pago de tasa de inhumación' })
+  @ApiPropertyOptional({
+    example: 'Observación sobre el pago de tasa de inhumación',
+  })
   @IsString()
   @IsOptional()
   observacionPagoTasaInhumacion?: string;
@@ -89,7 +101,9 @@ export class CreateRequisitosInhumacionDto {
   @IsBoolean()
   copiaTituloPropiedadNicho: boolean;
 
-  @ApiPropertyOptional({ example: 'Observación sobre el título de propiedad del nicho' })
+  @ApiPropertyOptional({
+    example: 'Observación sobre el título de propiedad del nicho',
+  })
   @IsString()
   @IsOptional()
   observacionCopiaTituloPropiedadNicho?: string;
@@ -99,7 +113,9 @@ export class CreateRequisitosInhumacionDto {
   @IsOptional()
   autorizacionDeMovilizacionDelCadaver?: boolean;
 
-  @ApiPropertyOptional({ example: 'Observación sobre la autorización de movilización del cadáver' })
+  @ApiPropertyOptional({
+    example: 'Observación sobre la autorización de movilización del cadáver',
+  })
   @IsString()
   @IsOptional()
   observacionAutorizacionMovilizacion?: string;
@@ -125,7 +141,7 @@ export class CreateRequisitosInhumacionDto {
   // F) Datos del fallecido
   @ApiProperty({
     description: 'ID de la persona fallecida',
-    example: { id_persona: 'uuid-fallecido'},
+    example: { id_persona: 'uuid-fallecido' },
   })
   @IsNotEmpty()
   id_fallecido: DeepPartial<Persona>;
@@ -134,11 +150,17 @@ export class CreateRequisitosInhumacionDto {
   @IsDateString()
   fechaInhumacion: Date;
 
-  @ApiProperty({ example: '14:30', description: 'Hora de la inhumación (formato 24h)' })
+  @ApiProperty({
+    example: '14:30',
+    description: 'Hora de la inhumación (formato 24h)',
+  })
   @IsString()
   horaInhumacion: string;
 
-  @ApiProperty({ example: 'Nombre del administrador del nicho', description: 'Nombre del administrador del nicho' })
+  @ApiProperty({
+    example: 'Nombre del administrador del nicho',
+    description: 'Nombre del administrador del nicho',
+  })
   @IsString()
   nombreAdministradorNicho: string;
 }

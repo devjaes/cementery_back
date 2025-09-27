@@ -8,9 +8,11 @@ import { Persona } from 'src/personas/entities/persona.entity';
 import { PropietarioNicho } from 'src/propietarios-nichos/entities/propietarios-nicho.entity';
 
 @Module({
-  imports:[TypeOrmModule.forFeature([Nicho, HuecosNicho, Persona, PropietarioNicho])],
+  imports: [
+    TypeOrmModule.forFeature([Nicho, HuecosNicho, Persona, PropietarioNicho]),
+  ],
   controllers: [NichosController],
   providers: [NichoService],
-  exports: [NichoService]
+  exports: [NichoService],
 })
 export class NichoModule {}

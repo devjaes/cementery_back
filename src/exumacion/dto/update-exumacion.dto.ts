@@ -9,7 +9,7 @@ export class UpdateExumacionDto extends PartialType(CreateExumacionDto) {
   @ApiProperty({
     description: 'ID único de la exhumación a actualizar',
     example: '123e4567-e89b-12d3-a456-426614174000',
-    required: true
+    required: true,
   })
   @IsString()
   @IsNotEmpty()

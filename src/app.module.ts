@@ -26,7 +26,7 @@ import { SharedModule } from './shared/shared.module';
 
 @Module({
   imports: [
-    ConfigModule.forRoot({isGlobal: true}),
+    ConfigModule.forRoot({ isGlobal: true }),
     TypeOrmModule.forRoot({
       type: process.env.DB_TYPE as any,
       host: process.env.DB_HOST,
@@ -49,8 +49,8 @@ import { SharedModule } from './shared/shared.module';
       // ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : false,
       synchronize: true, // Solo para desarrollo, no usar en producción
     }),
-    UserModule, 
-    CementerioModule, 
+    UserModule,
+    CementerioModule,
     AuthModule,
     NichoModule,
     ExumacionModule,

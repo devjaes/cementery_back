@@ -7,7 +7,7 @@ export class UpdateHuecosNichoDto extends PartialType(CreateHuecosNichoDto) {
     description: 'ID único del hueco a actualizar',
     example: '123e4567-e89b-12d3-a456-426614174000',
     format: 'uuid',
-    required: true
+    required: true,
   })
   @IsString()
   @IsNotEmpty()

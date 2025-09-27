@@ -5,7 +5,7 @@ import { HuecosNicho } from './entities/huecos-nicho.entity';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
 @Module({
-  imports:[TypeOrmModule.forFeature([HuecosNicho])],
+  imports: [TypeOrmModule.forFeature([HuecosNicho])],
   controllers: [HuecosNichosController],
   providers: [HuecosNichosService],
   exports: [HuecosNichosService, TypeOrmModule.forFeature([HuecosNicho])],

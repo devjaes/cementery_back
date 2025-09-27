@@ -9,6 +9,5 @@ import { Persona } from './entities/persona.entity';
   controllers: [PersonasController],
   providers: [PersonasService],
   exports: [PersonasService],
-
 })
 export class PersonasModule {}

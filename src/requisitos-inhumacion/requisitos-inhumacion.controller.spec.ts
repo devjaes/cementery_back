@@ -11,7 +11,9 @@ describe('RequisitosInhumacionController', () => {
       providers: [RequisitosInhumacionService],
     }).compile();
 
-    controller = module.get<RequisitosInhumacionController>(RequisitosInhumacionController);
+    controller = module.get<RequisitosInhumacionController>(
+      RequisitosInhumacionController,
+    );
   });
 
   it('should be defined', () => {

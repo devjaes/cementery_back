@@ -7,11 +7,9 @@ import { ExumacionService } from './exumacion.service';
 import { Nicho } from '../nicho/entities/nicho.entity'; // Asegúrate de que la ruta sea correcta
 
 @Module({
-  imports: [
-    TypeOrmModule.forFeature([Exumacion, Nicho]),
-  ],
+  imports: [TypeOrmModule.forFeature([Exumacion, Nicho])],
   controllers: [ExumacionController],
   providers: [ExumacionService],
-  exports: [ExumacionService]
+  exports: [ExumacionService],
 })
 export class ExumacionModule {}
