@@ -3,7 +3,6 @@ import { Injectable } from '@nestjs/common';
 import * as PdfPrinter from 'pdfmake';
 import * as fs from 'fs';
 import * as path from 'path';
-import { text } from 'stream/consumers';
 
 @Injectable()
 export class PDFGeneratorService {
@@ -28,6 +27,7 @@ export class PDFGeneratorService {
             normal: fs.existsSync(normal) ? normal : undefined,
             bold: fs.existsSync(bold) ? bold : undefined,
             italics: fs.existsSync(italics) ? italics : undefined,
+            bolditalics: fs.existsSync(bold) ? bold : undefined,
           },
         };
       } catch (error) {
@@ -1221,6 +1221,397 @@ export class PDFGeneratorService {
       console.error('Error generando PDF:', error);
       return Promise.reject('Ocurrió un error al generar el PDF');
     }
+  }
+
+  async generarReciboPago(payment: any): Promise<string> {
+    try {
+      let fonts: any;
+
+      try {
+        const normal = path.join(
+          process.cwd(),
+          'assets/fonts/Roboto-Regular.ttf',
+        );
+        const bold = path.join(process.cwd(), 'assets/fonts/Roboto-Bold.ttf');
+        const italics = path.join(
+          process.cwd(),
+          'assets/fonts/Roboto-Italic.ttf',
+        );
+
+        fonts = {
+          Roboto: {
+            normal: fs.existsSync(normal) ? normal : undefined,
+            bold: fs.existsSync(bold) ? bold : undefined,
+            italics: fs.existsSync(italics) ? italics : undefined,
+            bolditalics: fs.existsSync(bold) ? bold : undefined,
+          },
+        };
+      } catch (error) {
+        console.warn(
+          'No se pudieron cargar las fuentes. Se usará la fuente por defecto.',
+        );
+        fonts = {};
+      }
+
+      let imageBase64 = '';
+      const imagePath = path.join(process.cwd(), 'assets/img/logoPillaro.jpeg');
+
+      if (fs.existsSync(imagePath)) {
+        const imageBuffer = fs.readFileSync(imagePath);
+        imageBase64 = imageBuffer.toString('base64');
+      } else {
+        console.warn(
+          `Imagen no encontrada en: ${imagePath}. El PDF se generará sin el logo.`,
+        );
+      }
+
+      const images = {
+        ...(imageBase64 && {
+          logoPillaro: `data:image/jpeg;base64,${imageBase64}`,
+        }),
+      };
+
+      const printer = new PdfPrinter(fonts);
+
+      const docDefinition = {
+        images,
+        content: [
+          {
+            table: {
+              widths: ['*'],
+              body: [
+                [
+                  {
+                    stack: [
+                      {
+                        columns: [
+                          {
+                            image: images['logoPillaro']
+                              ? 'logoPillaro'
+                              : undefined,
+                            width: 80,
+                            height: 32,
+                          },
+                          {
+                            width: '*',
+                            stack: [
+                              {
+                                text: 'GADM SANTIAGO DE PÍLLARO',
+                                style: 'headerCenter',
+                                margin: [0, 8, 0, 4],
+                              },
+                              {
+                                text: 'DIRECCIÓN DE SERVICIOS PÚBLICOS',
+                                style: 'subheaderCenter',
+                                bold: true,
+                              },
+                              {
+                                text: 'RECIBO DE PAGO',
+                                style: 'title',
+                                margin: [0, 8, 0, 0],
+                              },
+                            ],
+                            alignment: 'center',
+                          },
+                          { width: 60, text: '' },
+                        ],
+                        margin: [0, 0, 0, 20],
+                      },
+
+                      {
+                        table: {
+                          widths: ['30%', '70%'],
+                          body: [
+                            [
+                              {
+                                text: 'Código de Pago:',
+                                bold: true,
+                                style: 'tableLabel',
+                              },
+                              {
+                                text: payment.paymentCode || '',
+                                style: 'tableValue',
+                              },
+                            ],
+                            [
+                              {
+                                text: 'Fecha de Generación:',
+                                bold: true,
+                                style: 'tableLabel',
+                              },
+                              {
+                                text: this.formatearFechaLarga(
+                                  payment.generatedDate,
+                                ),
+                                style: 'tableValue',
+                              },
+                            ],
+                            [
+                              {
+                                text: 'Estado:',
+                                bold: true,
+                                style: 'tableLabel',
+                              },
+                              {
+                                text:
+                                  payment.status === 'paid'
+                                    ? 'PAGADO'
+                                    : 'PENDIENTE',
+                                style: 'tableValue',
+                                color:
+                                  payment.status === 'paid' ? 'green' : 'red',
+                                bold: true,
+                              },
+                            ],
+                            [
+                              {
+                                text: 'Tipo de Procedimiento:',
+                                bold: true,
+                                style: 'tableLabel',
+                              },
+                              {
+                                text: this.formatProcedureType(
+                                  payment.procedureType,
+                                ),
+                                style: 'tableValue',
+                              },
+                            ],
+                            [
+                              {
+                                text: 'Monto:',
+                                bold: true,
+                                style: 'tableLabel',
+                              },
+                              {
+                                text: `$${parseFloat(payment.amount).toFixed(2)}`,
+                                style: 'tableValue',
+                                bold: true,
+                                fontSize: 14,
+                              },
+                            ],
+                            [
+                              {
+                                text: 'Generado por:',
+                                bold: true,
+                                style: 'tableLabel',
+                              },
+                              {
+                                text: payment.generatedBy || '',
+                                style: 'tableValue',
+                              },
+                            ],
+                          ],
+                        },
+                        layout: {
+                          hLineWidth: () => 0.5,
+                          vLineWidth: () => 0.5,
+                          hLineColor: () => '#cccccc',
+                          vLineColor: () => '#cccccc',
+                          paddingLeft: () => 8,
+                          paddingRight: () => 8,
+                          paddingTop: () => 6,
+                          paddingBottom: () => 6,
+                        },
+                        margin: [0, 0, 0, 20],
+                      },
+
+                      ...(payment.status === 'paid'
+                        ? [
+                            {
+                              table: {
+                                widths: ['30%', '70%'],
+                                body: [
+                                  [
+                                    {
+                                      text: 'INFORMACIÓN DE PAGO',
+                                      colSpan: 2,
+                                      bold: true,
+                                      alignment: 'center',
+                                      fillColor: '#f0f0f0',
+                                      margin: [0, 8, 0, 8],
+                                    },
+                                    {},
+                                  ],
+                                  [
+                                    {
+                                      text: 'Fecha de Pago:',
+                                      bold: true,
+                                      style: 'tableLabel',
+                                    },
+                                    {
+                                      text: this.formatearFechaLarga(
+                                        payment.paidDate,
+                                      ),
+                                      style: 'tableValue',
+                                    },
+                                  ],
+                                  [
+                                    {
+                                      text: 'Validado por:',
+                                      bold: true,
+                                      style: 'tableLabel',
+                                    },
+                                    {
+                                      text: payment.validatedBy || '',
+                                      style: 'tableValue',
+                                    },
+                                  ],
+                                ],
+                              },
+                              layout: {
+                                hLineWidth: () => 0.5,
+                                vLineWidth: () => 0.5,
+                                hLineColor: () => '#cccccc',
+                                vLineColor: () => '#cccccc',
+                                paddingLeft: () => 8,
+                                paddingRight: () => 8,
+                                paddingTop: () => 6,
+                                paddingBottom: () => 6,
+                              },
+                              margin: [0, 0, 0, 20],
+                            },
+                          ]
+                        : []),
+
+                      ...(payment.observations
+                        ? [
+                            {
+                              table: {
+                                widths: ['*'],
+                                body: [
+                                  [
+                                    {
+                                      text: 'OBSERVACIONES',
+                                      bold: true,
+                                      alignment: 'center',
+                                      fillColor: '#f0f0f0',
+                                      margin: [0, 8, 0, 8],
+                                    },
+                                  ],
+                                  [
+                                    {
+                                      text: payment.observations,
+                                      style: 'tableValue',
+                                      margin: [8, 8, 8, 8],
+                                    },
+                                  ],
+                                ],
+                              },
+                              layout: {
+                                hLineWidth: () => 0.5,
+                                vLineWidth: () => 0.5,
+                                hLineColor: () => '#cccccc',
+                                vLineColor: () => '#cccccc',
+                              },
+                              margin: [0, 0, 0, 20],
+                            },
+                          ]
+                        : []),
+
+                      {
+                        text: [
+                          'Este recibo es válido como comprobante de ',
+                          {
+                            text:
+                              payment.status === 'paid'
+                                ? 'pago realizado'
+                                : 'solicitud de pago',
+                            bold: true,
+                          },
+                          ' para el procedimiento indicado.',
+                        ],
+                        style: 'footer',
+                        alignment: 'center',
+                        margin: [0, 30, 0, 0],
+                      },
+
+                      {
+                        text: `Generado el ${this.formatearFechaLarga(new Date())} a las ${new Date().toLocaleTimeString('es-EC')}`,
+                        style: 'timestamp',
+                        alignment: 'center',
+                        margin: [0, 10, 0, 0],
+                      },
+                    ],
+                  },
+                ],
+              ],
+            },
+            layout: {
+              hLineWidth: () => 1,
+              vLineWidth: () => 1,
+              hLineColor: () => 'black',
+              vLineColor: () => 'black',
+              paddingLeft: () => 20,
+              paddingRight: () => 20,
+              paddingTop: () => 20,
+              paddingBottom: () => 20,
+            },
+            margin: [40, 40, 40, 40],
+          },
+        ],
+        styles: {
+          headerCenter: { fontSize: 16, bold: true, alignment: 'center' },
+          subheaderCenter: { fontSize: 12, alignment: 'center' },
+          title: {
+            fontSize: 18,
+            bold: true,
+            alignment: 'center',
+            color: '#2c5aa0',
+          },
+          tableLabel: { fontSize: 11, margin: [0, 2, 0, 2] },
+          tableValue: { fontSize: 11, margin: [0, 2, 0, 2] },
+          footer: { fontSize: 10, italics: true },
+          timestamp: { fontSize: 8, color: '#666666' },
+        },
+      };
+
+      const pdfDir = path.resolve(__dirname, '../../pdfs');
+
+      if (!fs.existsSync(pdfDir)) {
+        fs.mkdirSync(pdfDir, { recursive: true });
+      }
+
+      if (!payment?.paymentId) {
+        return Promise.reject(
+          'No se puede generar el nombre del PDF: ID de pago inválido',
+        );
+      }
+
+      const pdfPath = path.resolve(
+        pdfDir,
+        `recibo_pago_${payment.paymentCode || payment.paymentId}.pdf`,
+      );
+
+      return new Promise((resolve, reject) => {
+        const pdfDoc = printer.createPdfKitDocument(docDefinition);
+        const writeStream = fs.createWriteStream(pdfPath);
+
+        pdfDoc.pipe(writeStream);
+        pdfDoc.end();
+
+        writeStream.on('finish', () => {
+          resolve(pdfPath);
+        });
+
+        writeStream.on('error', (err) => {
+          reject(err);
+        });
+      });
+    } catch (error) {
+      console.error('Error generando recibo de pago:', error);
+      return Promise.reject('Ocurrió un error al generar el recibo de pago');
+    }
+  }
+
+  private formatProcedureType(type: string): string {
+    const types = {
+      burial: 'INHUMACIÓN',
+      exhumation: 'EXHUMACIÓN',
+      niche_sale: 'VENTA DE NICHO',
+      tomb_improvement: 'MEJORA DE TUMBA',
+      hole_extension: 'EXTENSIÓN DE HUECO',
+    };
+    return types[type] || type.toUpperCase();
   }
 
   formatearFechaLarga(fecha: string | Date | undefined | null): string {

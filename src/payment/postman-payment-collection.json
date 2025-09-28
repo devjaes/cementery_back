@@ -1,0 +1,662 @@
+{
+	"info": {
+		"name": "Payment Module API",
+		"description": "Complete API collection for the Payment Module - Cemetery Management System",
+		"version": "1.0.0",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:3000",
+			"type": "string"
+		},
+		{
+			"key": "paymentId",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "paymentCode",
+			"value": "",
+			"type": "string"
+		}
+	],
+	"item": [
+		{
+			"name": "Create Payment",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"procedureType\": \"burial\",\n  \"procedureId\": \"123e4567-e89b-12d3-a456-426614174000\",\n  \"amount\": 150.50,\n  \"generatedBy\": \"admin-user\",\n  \"observations\": \"Payment for burial procedure\"\n}"
+				},
+				"url": {
+					"raw": "{{baseUrl}}/payments",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"payments"
+					]
+				},
+				"description": "Creates a new payment record for a procedure"
+			},
+			"response": [
+				{
+					"name": "Success Response",
+					"originalRequest": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"procedureType\": \"burial\",\n  \"procedureId\": \"123e4567-e89b-12d3-a456-426614174000\",\n  \"amount\": 150.50,\n  \"generatedBy\": \"admin-user\",\n  \"observations\": \"Payment for burial procedure\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/payments",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"payments"
+							]
+						}
+					},
+					"status": "Created",
+					"code": 201,
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						}
+					],
+					"body": "{\n  \"statusCode\": 201,\n  \"message\": \"Payment created successfully\",\n  \"data\": {\n    \"paymentId\": \"456e7890-e89b-12d3-a456-426614174001\",\n    \"procedureType\": \"burial\",\n    \"procedureId\": \"123e4567-e89b-12d3-a456-426614174000\",\n    \"amount\": 150.50,\n    \"status\": \"pending\",\n    \"paymentCode\": \"PAY-2025-09-28-00001\",\n    \"generatedDate\": \"2025-09-28T10:30:00Z\",\n    \"paidDate\": null,\n    \"receiptFile\": null,\n    \"observations\": \"Payment for burial procedure\",\n    \"generatedBy\": \"admin-user\",\n    \"validatedBy\": null,\n    \"updatedDate\": \"2025-09-28T10:30:00Z\"\n  }\n}"
+				}
+			]
+		},
+		{
+			"name": "Get All Payments",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{baseUrl}}/payments",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"payments"
+					]
+				},
+				"description": "Retrieves all payments without filters"
+			},
+			"response": [
+				{
+					"name": "Success Response",
+					"originalRequest": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/payments",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"payments"
+							]
+						}
+					},
+					"status": "OK",
+					"code": 200,
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						}
+					],
+					"body": "{\n  \"statusCode\": 200,\n  \"message\": \"Payments retrieved successfully\",\n  \"data\": [\n    {\n      \"paymentId\": \"456e7890-e89b-12d3-a456-426614174001\",\n      \"procedureType\": \"burial\",\n      \"procedureId\": \"123e4567-e89b-12d3-a456-426614174000\",\n      \"amount\": 150.50,\n      \"status\": \"pending\",\n      \"paymentCode\": \"PAY-2025-09-28-00001\",\n      \"generatedDate\": \"2025-09-28T10:30:00Z\",\n      \"paidDate\": null,\n      \"receiptFile\": null,\n      \"observations\": \"Payment for burial procedure\",\n      \"generatedBy\": \"admin-user\",\n      \"validatedBy\": null,\n      \"updatedDate\": \"2025-09-28T10:30:00Z\"\n    }\n  ],\n  \"count\": 1\n}"
+				}
+			]
+		},
+		{
+			"name": "Get Payments with Filters",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{baseUrl}}/payments?status=pending&procedureType=burial&generatedBy=admin&paymentCode=PAY-2025",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"payments"
+					],
+					"query": [
+						{
+							"key": "status",
+							"value": "pending",
+							"description": "Filter by payment status (pending|paid)"
+						},
+						{
+							"key": "procedureType",
+							"value": "burial",
+							"description": "Filter by procedure type (burial|exhumation|niche_sale|tomb_improvement|hole_extension)"
+						},
+						{
+							"key": "generatedBy",
+							"value": "admin",
+							"description": "Filter by user who generated the payment"
+						},
+						{
+							"key": "paymentCode",
+							"value": "PAY-2025",
+							"description": "Filter by payment code (partial match)"
+						}
+					]
+				},
+				"description": "Retrieves payments with optional filters"
+			}
+		},
+		{
+			"name": "Get Payment by ID",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{baseUrl}}/payments/{{paymentId}}",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"payments",
+						"{{paymentId}}"
+					]
+				},
+				"description": "Retrieves a specific payment by its UUID"
+			},
+			"response": [
+				{
+					"name": "Success Response",
+					"originalRequest": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/payments/456e7890-e89b-12d3-a456-426614174001",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"payments",
+								"456e7890-e89b-12d3-a456-426614174001"
+							]
+						}
+					},
+					"status": "OK",
+					"code": 200,
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						}
+					],
+					"body": "{\n  \"statusCode\": 200,\n  \"message\": \"Payment retrieved successfully\",\n  \"data\": {\n    \"paymentId\": \"456e7890-e89b-12d3-a456-426614174001\",\n    \"procedureType\": \"burial\",\n    \"procedureId\": \"123e4567-e89b-12d3-a456-426614174000\",\n    \"amount\": 150.50,\n    \"status\": \"pending\",\n    \"paymentCode\": \"PAY-2025-09-28-00001\",\n    \"generatedDate\": \"2025-09-28T10:30:00Z\",\n    \"paidDate\": null,\n    \"receiptFile\": null,\n    \"observations\": \"Payment for burial procedure\",\n    \"generatedBy\": \"admin-user\",\n    \"validatedBy\": null,\n    \"updatedDate\": \"2025-09-28T10:30:00Z\"\n  }\n}"
+				}
+			]
+		},
+		{
+			"name": "Get Payment by Code",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{baseUrl}}/payments/code/{{paymentCode}}",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"payments",
+						"code",
+						"{{paymentCode}}"
+					]
+				},
+				"description": "Retrieves a payment by its unique payment code"
+			}
+		},
+		{
+			"name": "Get Payments by Procedure",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{baseUrl}}/payments/procedure/burial/123e4567-e89b-12d3-a456-426614174000",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"payments",
+						"procedure",
+						"burial",
+						"123e4567-e89b-12d3-a456-426614174000"
+					]
+				},
+				"description": "Retrieves all payments for a specific procedure"
+			},
+			"response": [
+				{
+					"name": "Success Response",
+					"originalRequest": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/payments/procedure/burial/123e4567-e89b-12d3-a456-426614174000",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"payments",
+								"procedure",
+								"burial",
+								"123e4567-e89b-12d3-a456-426614174000"
+							]
+						}
+					},
+					"status": "OK",
+					"code": 200,
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						}
+					],
+					"body": "{\n  \"statusCode\": 200,\n  \"message\": \"Procedure payments retrieved successfully\",\n  \"data\": [\n    {\n      \"paymentId\": \"456e7890-e89b-12d3-a456-426614174001\",\n      \"procedureType\": \"burial\",\n      \"procedureId\": \"123e4567-e89b-12d3-a456-426614174000\",\n      \"amount\": 150.50,\n      \"status\": \"pending\",\n      \"paymentCode\": \"PAY-2025-09-28-00001\",\n      \"generatedDate\": \"2025-09-28T10:30:00Z\",\n      \"paidDate\": null,\n      \"receiptFile\": null,\n      \"observations\": \"Payment for burial procedure\",\n      \"generatedBy\": \"admin-user\",\n      \"validatedBy\": null,\n      \"updatedDate\": \"2025-09-28T10:30:00Z\"\n    }\n  ]\n}"
+				}
+			]
+		},
+		{
+			"name": "Update Payment",
+			"request": {
+				"method": "PATCH",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"status\": \"paid\",\n  \"observations\": \"Payment confirmed by bank transfer\",\n  \"validatedBy\": \"admin-user\"\n}"
+				},
+				"url": {
+					"raw": "{{baseUrl}}/payments/{{paymentId}}",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"payments",
+						"{{paymentId}}"
+					]
+				},
+				"description": "Updates payment information"
+			},
+			"response": [
+				{
+					"name": "Success Response",
+					"originalRequest": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"status\": \"paid\",\n  \"observations\": \"Payment confirmed by bank transfer\",\n  \"validatedBy\": \"admin-user\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/payments/456e7890-e89b-12d3-a456-426614174001",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"payments",
+								"456e7890-e89b-12d3-a456-426614174001"
+							]
+						}
+					},
+					"status": "OK",
+					"code": 200,
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						}
+					],
+					"body": "{\n  \"statusCode\": 200,\n  \"message\": \"Payment updated successfully\",\n  \"data\": {\n    \"paymentId\": \"456e7890-e89b-12d3-a456-426614174001\",\n    \"procedureType\": \"burial\",\n    \"procedureId\": \"123e4567-e89b-12d3-a456-426614174000\",\n    \"amount\": 150.50,\n    \"status\": \"paid\",\n    \"paymentCode\": \"PAY-2025-09-28-00001\",\n    \"generatedDate\": \"2025-09-28T10:30:00Z\",\n    \"paidDate\": \"2025-09-28T11:00:00Z\",\n    \"receiptFile\": null,\n    \"observations\": \"Payment confirmed by bank transfer\",\n    \"generatedBy\": \"admin-user\",\n    \"validatedBy\": \"admin-user\",\n    \"updatedDate\": \"2025-09-28T11:00:00Z\"\n  }\n}"
+				}
+			]
+		},
+		{
+			"name": "Confirm Payment (Manual)",
+			"request": {
+				"method": "PATCH",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"validatedBy\": \"admin-user\"\n}"
+				},
+				"url": {
+					"raw": "{{baseUrl}}/payments/{{paymentId}}/confirm",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"payments",
+						"{{paymentId}}",
+						"confirm"
+					]
+				},
+				"description": "Manually confirms a payment without receipt upload"
+			},
+			"response": [
+				{
+					"name": "Success Response",
+					"originalRequest": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"validatedBy\": \"admin-user\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/payments/456e7890-e89b-12d3-a456-426614174001/confirm",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"payments",
+								"456e7890-e89b-12d3-a456-426614174001",
+								"confirm"
+							]
+						}
+					},
+					"status": "OK",
+					"code": 200,
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						}
+					],
+					"body": "{\n  \"statusCode\": 200,\n  \"message\": \"Payment confirmed successfully\",\n  \"data\": {\n    \"paymentId\": \"456e7890-e89b-12d3-a456-426614174001\",\n    \"procedureType\": \"burial\",\n    \"procedureId\": \"123e4567-e89b-12d3-a456-426614174000\",\n    \"amount\": 150.50,\n    \"status\": \"paid\",\n    \"paymentCode\": \"PAY-2025-09-28-00001\",\n    \"generatedDate\": \"2025-09-28T10:30:00Z\",\n    \"paidDate\": \"2025-09-28T11:00:00Z\",\n    \"receiptFile\": null,\n    \"observations\": \"Payment for burial procedure\",\n    \"generatedBy\": \"admin-user\",\n    \"validatedBy\": \"admin-user\",\n    \"updatedDate\": \"2025-09-28T11:00:00Z\"\n  }\n}"
+				}
+			]
+		},
+		{
+			"name": "Upload Receipt",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "file",
+							"type": "file",
+							"src": [],
+							"description": "Receipt file (JPEG, JPG, PNG, or PDF - max 5MB)"
+						},
+						{
+							"key": "validatedBy",
+							"value": "admin-user",
+							"type": "text",
+							"description": "User who validates the payment"
+						}
+					]
+				},
+				"url": {
+					"raw": "{{baseUrl}}/payments/{{paymentId}}/receipt",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"payments",
+						"{{paymentId}}",
+						"receipt"
+					]
+				},
+				"description": "Uploads a receipt file and automatically confirms the payment"
+			},
+			"response": [
+				{
+					"name": "Success Response",
+					"originalRequest": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "file",
+									"type": "file",
+									"src": []
+								},
+								{
+									"key": "validatedBy",
+									"value": "admin-user",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{baseUrl}}/payments/456e7890-e89b-12d3-a456-426614174001/receipt",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"payments",
+								"456e7890-e89b-12d3-a456-426614174001",
+								"receipt"
+							]
+						}
+					},
+					"status": "OK",
+					"code": 200,
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						}
+					],
+					"body": "{\n  \"statusCode\": 200,\n  \"message\": \"Receipt uploaded and payment confirmed successfully\",\n  \"data\": {\n    \"paymentId\": \"456e7890-e89b-12d3-a456-426614174001\",\n    \"procedureType\": \"burial\",\n    \"procedureId\": \"123e4567-e89b-12d3-a456-426614174000\",\n    \"amount\": 150.50,\n    \"status\": \"paid\",\n    \"paymentCode\": \"PAY-2025-09-28-00001\",\n    \"generatedDate\": \"2025-09-28T10:30:00Z\",\n    \"paidDate\": \"2025-09-28T11:00:00Z\",\n    \"receiptFile\": \"./uploads/receipts/1727435400000-12345.jpg\",\n    \"observations\": \"Payment for burial procedure\",\n    \"generatedBy\": \"admin-user\",\n    \"validatedBy\": \"admin-user\",\n    \"updatedDate\": \"2025-09-28T11:00:00Z\"\n  }\n}"
+				}
+			]
+		},
+		{
+			"name": "Generate Receipt PDF",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{baseUrl}}/payments/{{paymentId}}/receipt",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"payments",
+						"{{paymentId}}",
+						"receipt"
+					]
+				},
+				"description": "Generates or retrieves payment receipt data (PDF generation to be implemented)"
+			},
+			"response": [
+				{
+					"name": "Success Response",
+					"originalRequest": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/payments/456e7890-e89b-12d3-a456-426614174001/receipt",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"payments",
+								"456e7890-e89b-12d3-a456-426614174001",
+								"receipt"
+							]
+						}
+					},
+					"status": "OK",
+					"code": 200,
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						}
+					],
+					"body": "{\n  \"statusCode\": 200,\n  \"message\": \"Receipt data ready for PDF generation\",\n  \"data\": {\n    \"paymentId\": \"456e7890-e89b-12d3-a456-426614174001\",\n    \"procedureType\": \"burial\",\n    \"procedureId\": \"123e4567-e89b-12d3-a456-426614174000\",\n    \"amount\": 150.50,\n    \"status\": \"paid\",\n    \"paymentCode\": \"PAY-2025-09-28-00001\",\n    \"generatedDate\": \"2025-09-28T10:30:00Z\",\n    \"paidDate\": \"2025-09-28T11:00:00Z\",\n    \"receiptFile\": \"./uploads/receipts/1727435400000-12345.jpg\",\n    \"observations\": \"Payment for burial procedure\",\n    \"generatedBy\": \"admin-user\",\n    \"validatedBy\": \"admin-user\",\n    \"updatedDate\": \"2025-09-28T11:00:00Z\"\n  }\n}"
+				}
+			]
+		},
+		{
+			"name": "Delete Payment",
+			"request": {
+				"method": "DELETE",
+				"header": [],
+				"url": {
+					"raw": "{{baseUrl}}/payments/{{paymentId}}",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"payments",
+						"{{paymentId}}"
+					]
+				},
+				"description": "Deletes a payment (only allowed for pending payments)"
+			},
+			"response": [
+				{
+					"name": "Success Response",
+					"originalRequest": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/payments/456e7890-e89b-12d3-a456-426614174001",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"payments",
+								"456e7890-e89b-12d3-a456-426614174001"
+							]
+						}
+					},
+					"status": "OK",
+					"code": 200,
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						}
+					],
+					"body": "{\n  \"statusCode\": 200,\n  \"message\": \"Payment deleted successfully\"\n}"
+				},
+				{
+					"name": "Error - Cannot Delete Paid Payment",
+					"originalRequest": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/payments/456e7890-e89b-12d3-a456-426614174001",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"payments",
+								"456e7890-e89b-12d3-a456-426614174001"
+							]
+						}
+					},
+					"status": "Bad Request",
+					"code": 400,
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						}
+					],
+					"body": "{\n  \"statusCode\": 400,\n  \"message\": \"Cannot delete a confirmed payment\",\n  \"error\": \"Bad Request\"\n}"
+				}
+			]
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"// Set example values for variables if they're empty",
+					"if (!pm.collectionVariables.get('paymentId')) {",
+					"    pm.collectionVariables.set('paymentId', '456e7890-e89b-12d3-a456-426614174001');",
+					"}",
+					"",
+					"if (!pm.collectionVariables.get('paymentCode')) {",
+					"    pm.collectionVariables.set('paymentCode', 'PAY-2025-09-28-00001');",
+					"}"
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"// Auto-extract paymentId from create payment response",
+					"if (pm.request.url.path.includes('payments') && pm.request.method === 'POST' && !pm.request.url.path.includes('receipt')) {",
+					"    const responseJson = pm.response.json();",
+					"    if (responseJson.data && responseJson.data.paymentId) {",
+					"        pm.collectionVariables.set('paymentId', responseJson.data.paymentId);",
+					"        pm.collectionVariables.set('paymentCode', responseJson.data.paymentCode);",
+					"    }",
+					"}",
+					"",
+					"// Basic response validation",
+					"pm.test('Status code is success', function () {",
+					"    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+					"});",
+					"",
+					"pm.test('Response has correct structure', function () {",
+					"    const responseJson = pm.response.json();",
+					"    pm.expect(responseJson).to.have.property('statusCode');",
+					"    pm.expect(responseJson).to.have.property('message');",
+					"});"
+				]
+			}
+		}
+	]
+}

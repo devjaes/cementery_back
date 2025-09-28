@@ -23,12 +23,14 @@ import { RequisitosInhumacion } from './requisitos-inhumacion/entities/requisito
 import { HuecosNicho } from './huecos-nichos/entities/huecos-nicho.entity';
 import { RequisitosInhumacionModule } from './requisitos-inhumacion/requisitos-inhumacion.module';
 import { SharedModule } from './shared/shared.module';
+import { PaymentModule } from './payment/payment.module';
+import { Payment } from './payment/entities/payment.entity';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
     TypeOrmModule.forRoot({
-      type: process.env.DB_TYPE as any,
+      type: (process.env.DB_TYPE as 'postgres') || 'postgres',
       host: process.env.DB_HOST,
       port: +(process.env.DB_PORT || 5432),
       username: process.env.DB_USER,
@@ -45,6 +47,7 @@ import { SharedModule } from './shared/shared.module';
         PropietarioNicho,
         RequisitosInhumacion,
         HuecosNicho,
+        Payment,
       ],
       // ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : false,
       synchronize: true, // Solo para desarrollo, no usar en producción
@@ -60,6 +63,7 @@ import { SharedModule } from './shared/shared.module';
     HuecosNichosModule,
     RequisitosInhumacionModule,
     SharedModule,
+    PaymentModule,
   ],
   controllers: [AppController],
   providers: [AppService],
