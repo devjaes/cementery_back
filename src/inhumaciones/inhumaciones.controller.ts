@@ -8,7 +8,10 @@ import {
   Delete,
   Patch,
   UseGuards,
+  UseInterceptors,
+  UploadedFiles,
 } from '@nestjs/common';
+import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { InhumacionesService } from './inhumaciones.service';
 import { Inhumacion } from './entities/inhumacion.entity';
 import { UpdateInhumacionDto } from './dto/update-inhumacione.dto';
@@ -24,6 +27,7 @@ import {
   ApiNotFoundResponse,
   ApiBadRequestResponse,
   ApiBearerAuth,
+  ApiConsumes,
 } from '@nestjs/swagger';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 import { RolesGuard } from 'src/auth/roles.guard';
@@ -231,5 +235,69 @@ export class InhumacionesController {
   })
   findFallecidos(@Param('busqueda') busqueda: string) {
     return this.service.findByBusquedaFallecido(busqueda);
+  }
+
+  @Post(':id/documentos')
+  @UseInterceptors(
+    FileFieldsInterceptor([
+      { name: 'solicitud_firmada', maxCount: 1 },
+      { name: 'cedula_solicitante', maxCount: 1 },
+      { name: 'certificado_defuncion_civil', maxCount: 1 },
+      { name: 'certificado_defuncion_medico', maxCount: 1 },
+      { name: 'titulo_propiedad', maxCount: 1 },
+      { name: 'comprobante_pago', maxCount: 1 },
+      { name: 'autorizacion_movilizacion', maxCount: 1 },
+    ]),
+  )
+  @ApiConsumes('multipart/form-data')
+  @ApiOperation({
+    summary: 'Subir documentos para una inhumación',
+    description: 'Permite subir los documentos requeridos para una inhumación existente',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'ID de la inhumación',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+  })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        solicitud_firmada: { type: 'string', format: 'binary' },
+        cedula_solicitante: { type: 'string', format: 'binary' },
+        certificado_defuncion_civil: { type: 'string', format: 'binary' },
+        certificado_defuncion_medico: { type: 'string', format: 'binary' },
+        titulo_propiedad: { type: 'string', format: 'binary' },
+        comprobante_pago: { type: 'string', format: 'binary' },
+        autorizacion_movilizacion: { type: 'string', format: 'binary' },
+      },
+    },
+  })
+  @ApiOkResponse({ description: 'Documentos subidos exitosamente' })
+  @ApiNotFoundResponse({ description: 'Inhumación no encontrada' })
+  async uploadDocuments(
+    @Param('id') id: string,
+    @UploadedFiles()
+    files: {
+      solicitud_firmada?: Express.Multer.File[];
+      cedula_solicitante?: Express.Multer.File[];
+      certificado_defuncion_civil?: Express.Multer.File[];
+      certificado_defuncion_medico?: Express.Multer.File[];
+      titulo_propiedad?: Express.Multer.File[];
+      comprobante_pago?: Express.Multer.File[];
+      autorizacion_movilizacion?: Express.Multer.File[];
+    },
+  ) {
+    // Buscar la inhumación
+    const inhumacion = await this.service.findOne(id);
+    
+    // Guardar los archivos
+    const documentos = await this.service.guardarDocumentos(
+      files,
+      inhumacion.codigo_inhumacion,
+    );
+
+    // Actualizar la inhumación con las rutas de los documentos
+    return this.service.update(id, { documentos } as any);
   }
 }

@@ -1,9 +1,77 @@
-import { IsDate, IsNotEmpty, IsString, IsOptional } from 'class-validator';
+import { IsDate, IsNotEmpty, IsString, IsOptional, IsUUID, ValidateNested, IsObject } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
 import { Nicho } from 'src/nicho/entities/nicho.entity';
 import { Persona } from 'src/personas/entities/persona.entity';
 import { DeepPartial } from 'typeorm';
 import { RequisitosInhumacion } from 'src/requisitos-inhumacion/entities/requisitos-inhumacion.entity';
+
+// DTO para los documentos requeridos
+export class DocumentosInhumacionDto {
+  @ApiPropertyOptional({
+    description: 'Solicitud firmada por el propietario o heredero del nicho',
+    type: 'string',
+    format: 'binary',
+  })
+  @IsString()
+  @IsOptional()
+  solicitud_firmada?: string;
+
+  @ApiPropertyOptional({
+    description: 'Copia de cédula del solicitante',
+    type: 'string',
+    format: 'binary',
+  })
+  @IsString()
+  @IsOptional()
+  cedula_solicitante?: string;
+
+  @ApiPropertyOptional({
+    description: 'Certificado de defunción del registro civil',
+    type: 'string',
+    format: 'binary',
+  })
+  @IsString()
+  @IsOptional()
+  certificado_defuncion_civil?: string;
+
+  @ApiPropertyOptional({
+    description: 'Certificado de defunción otorgado por el médico tratante o casa de salud',
+    type: 'string',
+    format: 'binary',
+  })
+  @IsString()
+  @IsOptional()
+  certificado_defuncion_medico?: string;
+
+  @ApiPropertyOptional({
+    description: 'Título de propiedad del espacio (nicho, mausoleo, espacio en tierra)',
+    type: 'string',
+    format: 'binary',
+  })
+  @IsString()
+  @IsOptional()
+  titulo_propiedad?: string;
+
+  @ApiPropertyOptional({
+    description: 'Comprobante de pago de los derechos de inhumación',
+    type: 'string',
+    format: 'binary',
+  })
+  @IsString()
+  @IsOptional()
+  comprobante_pago?: string;
+
+  @ApiPropertyOptional({
+    description: 'Autorización de movilización del cuerpo (si aplica)',
+    type: 'string',
+    format: 'binary',
+  })
+  @IsString()
+  @IsOptional()
+  autorizacion_movilizacion?: string;
+
+}
 
 export class CreateInhumacionDto {
   @ApiProperty({
@@ -78,6 +146,16 @@ export class CreateInhumacionDto {
   @IsString()
   @IsNotEmpty()
   codigo_inhumacion: string;
+
+  @ApiPropertyOptional({
+    description: 'Documentos requeridos para la inhumación',
+    type: DocumentosInhumacionDto,
+    required: false,
+  })
+  @ValidateNested()
+  @Type(() => DocumentosInhumacionDto)
+  @IsOptional()
+  documentos?: DocumentosInhumacionDto;
 
   @ApiProperty({
     description: 'Estado de la inhumación',

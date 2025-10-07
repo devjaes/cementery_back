@@ -12,6 +12,8 @@ import { Inhumacion } from './entities/inhumacion.entity';
 import { UpdateInhumacionDto } from './dto/update-inhumacione.dto';
 import { HuecosNicho } from 'src/huecos-nichos/entities/huecos-nicho.entity';
 import { Persona } from 'src/personas/entities/persona.entity';
+import * as fs from 'fs';
+import * as path from 'path';
 
 @Injectable()
 export class InhumacionesService {
@@ -523,5 +525,61 @@ export class InhumacionesService {
       .normalize('NFD')
       .replace(/[\u0300-\u036f]/g, '')
       .trim();
+  }
+
+  /**
+   * Guarda archivos de documentos en el servidor
+   */
+  async guardarDocumentos(
+    files: {
+      solicitud_firmada?: Express.Multer.File[];
+      cedula_solicitante?: Express.Multer.File[];
+      certificado_defuncion_civil?: Express.Multer.File[];
+      certificado_defuncion_medico?: Express.Multer.File[];
+      titulo_propiedad?: Express.Multer.File[];
+      comprobante_pago?: Express.Multer.File[];
+      autorizacion_movilizacion?: Express.Multer.File[];
+    },
+    codigoInhumacion: string,
+  ): Promise<any> {
+    const documentos: any = {};
+    const uploadPath = path.join(process.cwd(), 'uploads', 'inhumaciones', codigoInhumacion);
+
+    // Crear carpeta si no existe
+    if (!fs.existsSync(uploadPath)) {
+      fs.mkdirSync(uploadPath, { recursive: true });
+    }
+
+    for (const [key, fileArray] of Object.entries(files)) {
+      if (fileArray && fileArray.length > 0) {
+        const file = fileArray[0]; 
+        const filename = `${key}_${Date.now()}${path.extname(file.originalname)}`;
+        const filepath = path.join(uploadPath, filename);
+
+        // Guardar archivo
+        fs.writeFileSync(filepath, file.buffer);
+
+        // Guardar ruta relativa
+        documentos[key] = `/uploads/inhumaciones/${codigoInhumacion}/${filename}`;
+      }
+    }
+
+    return documentos;
+  }
+
+  /**
+   * Elimina archivos de documentos del servidor
+   */
+  async eliminarDocumentos(documentos: any): Promise<void> {
+    if (!documentos) return;
+
+    for (const [key, filepath] of Object.entries(documentos)) {
+      if (filepath && typeof filepath === 'string') {
+        const fullPath = path.join(process.cwd(), filepath);
+        if (fs.existsSync(fullPath)) {
+          fs.unlinkSync(fullPath);
+        }
+      }
+    }
   }
 }
