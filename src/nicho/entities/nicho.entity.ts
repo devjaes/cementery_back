@@ -44,7 +44,7 @@ export class Nicho {
   @Column({ length: 20 })
   estado: string;
 
-    @Column({
+  @Column({
     type: 'enum',
     enum: EstadoNicho,
     default: EstadoNicho.DISPONIBLE,

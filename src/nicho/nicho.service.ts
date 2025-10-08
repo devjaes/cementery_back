@@ -11,6 +11,7 @@ import { UpdateNichoDto } from './dto/update-nicho.dto';
 import { HuecosNicho } from 'src/huecos-nichos/entities/huecos-nicho.entity';
 import { Persona } from 'src/personas/entities/persona.entity';
 import { PropietarioNicho } from 'src/propietarios-nichos/entities/propietarios-nicho.entity';
+import { EstadoNicho } from './enum/estadoNicho.enum';
 
 @Injectable()
 export class NichoService {
@@ -23,7 +24,7 @@ export class NichoService {
     private readonly personaRepository: Repository<Persona>,
     @InjectRepository(PropietarioNicho)
     private readonly nichoPropietarioRepository: Repository<PropietarioNicho>,
-  ) {}
+  ) { }
 
   /**
    * Crea un nuevo nicho y sus huecos asociados
@@ -45,8 +46,11 @@ export class NichoService {
         huecos.push(hueco);
       }
       const huecosGuardados = await this.huecosNichoRepository.save(huecos);
+      // Aseguramos que estadoVenta esté presente en la respuesta (si no vino en el DTO, usamos el default)
+      const estadoVenta = (nichoGuardado as any).estadoVenta ?? EstadoNicho.DISPONIBLE;
       return {
         ...nichoGuardado,
+        estadoVenta,
         huecos: huecosGuardados,
       };
     } catch (error) {
@@ -75,6 +79,7 @@ export class NichoService {
       // Mapeo para devolver relaciones con nombres más claros
       return nichos.map((nicho) => ({
         ...nicho,
+        estadoVenta: (nicho as any).estadoVenta,
         cementerio: nicho.id_cementerio,
         inhumaciones: nicho.inhumaciones,
         propietarios: nicho.propietarios_nicho,
@@ -98,6 +103,7 @@ export class NichoService {
       // Filtra solo los huecos disponibles
       return nichos.map((nicho) => ({
         ...nicho,
+        estadoVenta: (nicho as any).estadoVenta,
         huecos: nicho.huecos.filter((hueco) => hueco.estado === 'Disponible'),
       }));
     } catch (error) {
@@ -128,6 +134,7 @@ export class NichoService {
       }
       return {
         ...nicho,
+        estadoVenta: (nicho as any).estadoVenta,
         cementerio: nicho.id_cementerio,
         inhumaciones: nicho.inhumaciones,
         propietarios: nicho.propietarios_nicho,
@@ -152,6 +159,7 @@ export class NichoService {
       const nichoActualizado = await this.nichoRepository.save(nicho);
       return {
         nicho: nichoActualizado,
+        estadoVenta: (nichoActualizado as any).estadoVenta,
         cementerio: nicho.cementerio,
         inhumaciones: nicho.inhumaciones,
         propietarios: nicho.propietarios,
@@ -207,7 +215,7 @@ export class NichoService {
       if (error instanceof NotFoundException) throw error;
       throw new InternalServerErrorException(
         'Error al buscar los propietarios del nicho: ' +
-          (error.message || error),
+        (error.message || error),
       );
     }
   }
@@ -323,7 +331,7 @@ export class NichoService {
       if (error instanceof NotFoundException) throw error;
       throw new InternalServerErrorException(
         'Error al buscar los nichos por término de búsqueda: ' +
-          (error.message || error),
+        (error.message || error),
       );
     }
   }
@@ -357,7 +365,7 @@ export class NichoService {
       if (error instanceof NotFoundException) throw error;
       throw new InternalServerErrorException(
         'Error al buscar los nichos por cédula del fallecido: ' +
-          (error.message || error),
+        (error.message || error),
       );
     }
   }
