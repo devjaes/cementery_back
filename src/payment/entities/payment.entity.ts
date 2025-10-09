@@ -63,6 +63,30 @@ export class Payment {
   @Column({ type: 'varchar', length: 255, nullable: true })
   validatedBy: string;
 
+  @Column({
+    type: 'varchar',
+    length: 10,
+    nullable: false,
+    default: '0000000000',
+  })
+  buyerDocument: string;
+
+  @Column({
+    type: 'varchar',
+    length: 255,
+    nullable: false,
+    default: 'Sin nombre',
+  })
+  buyerName: string;
+
+  @Column({
+    type: 'varchar',
+    length: 500,
+    nullable: true,
+    default: 'Sin dirección',
+  })
+  buyerDirection: string;
+
   @UpdateDateColumn({ type: 'timestamp' })
   updatedDate: Date;
 }
