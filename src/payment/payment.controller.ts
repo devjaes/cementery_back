@@ -27,8 +27,26 @@ export class PaymentController {
   constructor(private readonly paymentService: PaymentService) {}
 
   @Post()
-  async create(@Body() createPaymentDto: CreatePaymentDto) {
-    return await this.paymentService.create(createPaymentDto);
+  async create(
+    @Body() createPaymentDto: CreatePaymentDto,
+    @Res() res: Response,
+  ) {
+    const payment = await this.paymentService.create(createPaymentDto);
+    const receiptPath = await this.paymentService.generateReceipt(
+      payment.paymentId,
+    );
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename="recibo-pago-${payment.paymentId}.pdf"`,
+    );
+
+    return res.sendFile(receiptPath, {
+      headers: {
+        'X-Payment-Data': JSON.stringify(payment),
+      },
+    });
   }
 
   @Get()
