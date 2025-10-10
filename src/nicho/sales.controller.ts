@@ -51,6 +51,11 @@ export class NicheSalesController {
           monto: 500.00,
           estado: 'pending',
           fechaGeneracion: '2024-10-10T10:00:00Z',
+          comprador: {
+            documento: '1234567890',
+            nombre: 'Juan Pérez',
+            direccion: 'Calle Principal 123',
+          },
         },
       },
     },
@@ -99,6 +104,11 @@ export class NicheSalesController {
           estado: 'paid',
           fechaPago: '2024-10-10T15:00:00Z',
           validadoPor: 'admin@cemetery.com',
+          comprador: {
+            documento: '1234567890',
+            nombre: 'Juan Pérez',
+            direccion: 'Calle Principal 123',
+          },
         },
         siguientePaso: {
           accion: 'crear_propietario',

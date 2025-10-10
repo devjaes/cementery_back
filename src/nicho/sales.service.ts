@@ -99,6 +99,9 @@ export class NicheSalesService {
         amount: reservarNichoDto.monto,
         generatedBy: reservarNichoDto.generadoPor,
         observations: reservarNichoDto.observaciones,
+        buyerDocument: persona.cedula,
+        buyerName: `${persona.nombres} ${persona.apellidos}`,
+        buyerDirection: reservarNichoDto.direccionComprador || 'Sin dirección',
       });
 
       return {
@@ -122,6 +125,11 @@ export class NicheSalesService {
           monto: ordenPago.amount,
           estado: ordenPago.status,
           fechaGeneracion: ordenPago.generatedDate,
+          comprador: {
+            documento: ordenPago.buyerDocument,
+            nombre: ordenPago.buyerName,
+            direccion: ordenPago.buyerDirection,
+          },
         },
       };
     } catch (error) {
@@ -202,6 +210,11 @@ export class NicheSalesService {
           estado: pagoConfirmado.status,
           fechaPago: pagoConfirmado.paidDate,
           validadoPor: pagoConfirmado.validatedBy,
+          comprador: {
+            documento: pagoConfirmado.buyerDocument,
+            nombre: pagoConfirmado.buyerName,
+            direccion: pagoConfirmado.buyerDirection,
+          },
         },
         siguientePaso: {
           accion: 'crear_propietario',
@@ -383,6 +396,11 @@ export class NicheSalesService {
               estado: pago.status,
               fechaGeneracion: pago.generatedDate,
               fechaPago: pago.paidDate,
+              comprador: {
+                documento: pago.buyerDocument,
+                nombre: pago.buyerName,
+                direccion: pago.buyerDirection,
+              },
             })),
           };
         }),

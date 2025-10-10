@@ -21,7 +21,8 @@ El usuario reserva un nicho, lo que:
   "idPersona": "uuid-del-cliente",
   "monto": 500.00,
   "generadoPor": "admin@cemetery.com",
-  "observaciones": "Reserva para familia Pérez"
+  "observaciones": "Reserva para familia Pérez",
+  "direccionComprador": "Calle Principal 123"
 }
 ```
 
@@ -47,7 +48,12 @@ El usuario reserva un nicho, lo que:
     "codigo": "PAY-241010-123456-001",
     "monto": 500.00,
     "estado": "pending",
-    "fechaGeneracion": "2024-10-10T10:00:00Z"
+    "fechaGeneracion": "2024-10-10T10:00:00Z",
+    "comprador": {
+      "documento": "1234567890",
+      "nombre": "Juan Pérez",
+      "direccion": "Calle Principal 123"
+    }
   }
 }
 ```
@@ -80,7 +86,12 @@ Finanzas aprueba el pago, lo que:
     "id": "uuid",
     "estado": "paid",
     "fechaPago": "2024-10-10T15:00:00Z",
-    "validadoPor": "finanzas@cemetery.com"
+    "validadoPor": "finanzas@cemetery.com",
+    "comprador": {
+      "documento": "1234567890",
+      "nombre": "Juan Pérez",
+      "direccion": "Calle Principal 123"
+    }
   },
   "siguientePaso": {
     "accion": "crear_propietario",

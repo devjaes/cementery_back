@@ -20,4 +20,8 @@ export class ReservarNichoDto {
   @IsString()
   @IsOptional()
   observaciones?: string;
+
+  @IsString()
+  @IsOptional()
+  direccionComprador?: string;
 }
