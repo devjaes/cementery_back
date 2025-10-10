@@ -1,6 +1,7 @@
 import { Nicho } from 'src/nicho/entities/nicho.entity';
 import { RequisitosInhumacion } from 'src/requisitos-inhumacion/entities/requisitos-inhumacion.entity';
 import { User } from 'src/user/entities/user.entity';
+import { Bloque } from 'src/bloques/entities/bloque.entity';
 import {
   BeforeInsert,
   BeforeUpdate,
@@ -38,6 +39,9 @@ export class Cementerio {
 
   @OneToMany(() => Nicho, (nicho) => nicho.id_cementerio)
   nichos: Nicho[];
+
+  @OneToMany(() => Bloque, (bloque) => bloque.id_cementerio)
+  bloques: Bloque[];
 
   @OneToMany(() => RequisitosInhumacion, (requisito) => requisito.id_cementerio)
   requisitos_inhumacion: RequisitosInhumacion[];

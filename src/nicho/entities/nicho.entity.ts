@@ -1,5 +1,6 @@
 // src/nichos/entities/nicho.entity.ts
 import { Cementerio } from 'src/cementerio/entities/cementerio.entity';
+import { Bloque } from 'src/bloques/entities/bloque.entity';
 import {
   Entity,
   PrimaryGeneratedColumn,
@@ -27,6 +28,12 @@ export class Nicho {
   })
   @JoinColumn({ name: 'id_cementerio' })
   id_cementerio: Cementerio;
+
+  @ManyToOne(() => Bloque, (bloque) => bloque.nichos, {
+    nullable: true,
+  })
+  @JoinColumn({ name: 'id_bloque' })
+  id_bloque: Bloque;
 
   @Column({ length: 50 })
   sector: string;
