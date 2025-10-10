@@ -1644,4 +1644,420 @@ export class PDFGeneratorService {
 
     return '';
   }
+
+  async generarReciboPagoV2(payment: any): Promise<string> {
+    console.log('generarReciboPagoV2', payment);
+
+    try {
+      const titulo = this.generateAutoIncrementalTitle();
+
+      let fonts: any;
+
+      try {
+        const normal = path.join(
+          process.cwd(),
+          'assets/fonts/Roboto-Regular.ttf',
+        );
+        const bold = path.join(process.cwd(), 'assets/fonts/Roboto-Bold.ttf');
+        const italics = path.join(
+          process.cwd(),
+          'assets/fonts/Roboto-Italic.ttf',
+        );
+
+        fonts = {
+          Roboto: {
+            normal: fs.existsSync(normal) ? normal : undefined,
+            bold: fs.existsSync(bold) ? bold : undefined,
+            italics: fs.existsSync(italics) ? italics : undefined,
+            bolditalics: fs.existsSync(bold) ? bold : undefined,
+          },
+        };
+      } catch (error) {
+        console.warn(
+          'No se pudieron cargar las fuentes. Se usará la fuente por defecto.',
+        );
+        fonts = {};
+      }
+
+      let imageBase64 = '';
+      const imagePath = path.join(process.cwd(), 'assets/img/logoPillaro.jpeg');
+
+      if (fs.existsSync(imagePath)) {
+        const imageBuffer = fs.readFileSync(imagePath);
+        imageBase64 = imageBuffer.toString('base64');
+      } else {
+        console.warn(
+          `Imagen no encontrada en: ${imagePath}. El PDF se generará sin el logo.`,
+        );
+      }
+
+      const images = {
+        ...(imageBase64 && {
+          logoPillaro: `data:image/jpeg;base64,${imageBase64}`,
+        }),
+      };
+
+      const printer = new PdfPrinter(fonts);
+
+      const docDefinition = {
+        images,
+        content: [
+          {
+            table: {
+              widths: ['*'],
+              body: [
+                [
+                  {
+                    stack: [
+                      {
+                        columns: [
+                          {
+                            image: images['logoPillaro']
+                              ? 'logoPillaro'
+                              : undefined,
+                            width: 100,
+                            height: 40,
+                          },
+                          {
+                            width: '*',
+                            stack: [
+                              {
+                                text: 'GADM SANTIAGO DE PÍLLARO',
+                                style: 'headerCenter',
+                                margin: [0, 10, 0, 15],
+                              },
+                              {
+                                text: 'DEPARTAMENTO DE SERVICIOS PÚBLICOS',
+                                style: 'subheaderCenter',
+                                bold: true,
+                              },
+                              {
+                                text: 'ORDEN DE PAGO NICHOS',
+                                style: 'title',
+                                margin: [0, 10, 0, 0],
+                              },
+                            ],
+                            alignment: 'center',
+                          },
+                          {
+                            width: 80,
+                            stack: [
+                              {
+                                text: `FECHA: ${this.formatearFechaCorta(new Date())}`,
+                                alignment: 'right',
+                                fontSize: 8,
+                                margin: [0, 0, 0, 2],
+                              },
+                              {
+                                text: `${new Date().toLocaleTimeString('es-EC', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}`,
+                                alignment: 'right',
+                                fontSize: 8,
+                              },
+                            ],
+                          },
+                        ],
+                        margin: [0, 0, 0, 20],
+                      },
+
+                      {
+                        table: {
+                          widths: ['25%', '75%'],
+                          body: [
+                            [
+                              {
+                                text: 'TITULO:',
+                                bold: true,
+                                fontSize: 9,
+                                margin: [0, 2, 0, 2],
+                              },
+                              {
+                                text: titulo,
+                                bold: true,
+                                fontSize: 9,
+                                margin: [0, 2, 0, 2],
+                              },
+                            ],
+                            [
+                              {
+                                text: 'CONTRIBUYENTE:',
+                                bold: true,
+                                fontSize: 9,
+                                margin: [0, 2, 0, 2],
+                              },
+                              {
+                                text: payment.buyerName || '',
+                                fontSize: 9,
+                                margin: [0, 2, 0, 2],
+                              },
+                            ],
+                            [
+                              {
+                                text: 'CEDULA:',
+                                bold: true,
+                                fontSize: 9,
+                                margin: [0, 2, 0, 2],
+                              },
+                              {
+                                text: payment.buyerDocument || '',
+                                fontSize: 9,
+                                margin: [0, 2, 0, 2],
+                              },
+                            ],
+                            payment.buyerDirection
+                              ? [
+                                  {
+                                    text: 'DIRECCION:',
+                                    bold: true,
+                                    fontSize: 9,
+                                    margin: [0, 2, 0, 2],
+                                  },
+                                  {
+                                    text: payment.buyerDirection,
+                                    fontSize: 9,
+                                    margin: [0, 2, 0, 2],
+                                  },
+                                ]
+                              : [],
+                            [
+                              {
+                                text: 'CAUSA:',
+                                bold: true,
+                                fontSize: 9,
+                                margin: [0, 2, 0, 2],
+                              },
+                              {
+                                text:
+                                  payment.causa || payment.reason || 'COMPRA',
+                                fontSize: 9,
+                                margin: [0, 2, 0, 2],
+                              },
+                            ],
+                            [
+                              {
+                                text: 'OBSERVACION:',
+                                bold: true,
+                                fontSize: 9,
+                                margin: [0, 2, 0, 2],
+                              },
+                              {
+                                text:
+                                  payment.observacion ||
+                                  payment.observations ||
+                                  '',
+                                fontSize: 9,
+                                margin: [0, 2, 0, 2],
+                              },
+                            ],
+                            [
+                              {
+                                text: 'TOTAL:',
+                                bold: true,
+                                fontSize: 10,
+                                margin: [0, 4, 0, 4],
+                              },
+                              {
+                                text: `$${parseFloat(payment.amount || payment.total || 0).toFixed(2)}`,
+                                bold: true,
+                                fontSize: 10,
+                                margin: [0, 4, 0, 4],
+                              },
+                            ],
+                          ],
+                        },
+                        layout: {
+                          hLineWidth: () => 0,
+                          vLineWidth: () => 0,
+                          paddingLeft: () => 0,
+                          paddingRight: () => 0,
+                          paddingTop: () => 2,
+                          paddingBottom: () => 2,
+                        },
+                        margin: [0, 0, 0, 15],
+                      },
+
+                      {
+                        table: {
+                          widths: ['50%', '50%'],
+                          body: [
+                            [
+                              {
+                                text: 'CUENTA',
+                                bold: true,
+                                alignment: 'center',
+                                fontSize: 9,
+                                margin: [0, 4, 0, 4],
+                              },
+                              {
+                                text: 'VALOR',
+                                bold: true,
+                                alignment: 'center',
+                                fontSize: 9,
+                                margin: [0, 4, 0, 4],
+                              },
+                            ],
+                            [
+                              {
+                                text: 'VENTA DE BOBEDAS Y SITIOS EN EL CEMENTERIO',
+                                alignment: 'left',
+                                fontSize: 9,
+                                margin: [0, 4, 0, 4],
+                              },
+                              {
+                                text: `$${parseFloat(payment.amount || payment.total || 0).toFixed(2)}`,
+                                alignment: 'right',
+                                fontSize: 9,
+                                margin: [0, 4, 0, 4],
+                              },
+                            ],
+                          ],
+                        },
+                        layout: {
+                          hLineWidth: () => 0.5,
+                          vLineWidth: () => 0.5,
+                          hLineColor: () => 'black',
+                          vLineColor: () => 'black',
+                          paddingLeft: () => 8,
+                          paddingRight: () => 8,
+                          paddingTop: () => 4,
+                          paddingBottom: () => 4,
+                        },
+                        margin: [0, 0, 0, 30],
+                      },
+
+                      {
+                        table: {
+                          widths: ['50%', '50%'],
+                          body: [
+                            [
+                              {
+                                stack: [
+                                  {
+                                    text: 'ING. JENNY CONSTANTE',
+                                    alignment: 'left',
+                                    fontSize: 9,
+                                    margin: [0, 0, 0, 2],
+                                  },
+                                  {
+                                    text: 'DIRECTOR(A) SERVICIOS PÚBLICOS',
+                                    alignment: 'left',
+                                    fontSize: 8,
+                                    margin: [0, 0, 0, 0],
+                                  },
+                                ],
+                              },
+                              {
+                                stack: [
+                                  {
+                                    text: payment.buyerName || '',
+                                    alignment: 'right',
+                                    fontSize: 9,
+                                    margin: [0, 0, 0, 2],
+                                  },
+                                  {
+                                    text: payment.buyerDocument || '',
+                                    alignment: 'right',
+                                    fontSize: 8,
+                                    margin: [0, 0, 0, 0],
+                                  },
+                                ],
+                              },
+                            ],
+                          ],
+                        },
+                        layout: {
+                          hLineWidth: () => 0,
+                          vLineWidth: () => 0,
+                          paddingLeft: () => 0,
+                          paddingRight: () => 0,
+                          paddingTop: () => 0,
+                          paddingBottom: () => 0,
+                        },
+                        margin: [0, 20, 0, 0],
+                      },
+                    ],
+                  },
+                ],
+              ],
+            },
+            layout: {
+              hLineWidth: () => 1,
+              vLineWidth: () => 1,
+              hLineColor: () => 'white',
+              vLineColor: () => 'white',
+              paddingLeft: () => 20,
+              paddingRight: () => 20,
+              paddingTop: () => 20,
+              paddingBottom: () => 20,
+            },
+            // margin: [40, 40, 40, 40],
+          },
+        ],
+        styles: {
+          headerCenter: { fontSize: 12, bold: true, alignment: 'center' },
+          subheaderCenter: { fontSize: 10, alignment: 'center' },
+          title: {
+            fontSize: 10,
+            bold: true,
+            alignment: 'center',
+          },
+        },
+      };
+
+      const pdfDir = path.resolve(__dirname, '../../pdfs');
+
+      if (!fs.existsSync(pdfDir)) {
+        fs.mkdirSync(pdfDir, { recursive: true });
+      }
+
+      if (!payment?.paymentId && !payment?.paymentCode) {
+        return Promise.reject(
+          'No se puede generar el nombre del PDF: ID de pago inválido',
+        );
+      }
+
+      const pdfPath = path.resolve(
+        pdfDir,
+        `recibo_pago_v2_${payment.paymentCode || payment.paymentId}.pdf`,
+      );
+
+      return new Promise((resolve, reject) => {
+        const pdfDoc = printer.createPdfKitDocument(docDefinition);
+        const writeStream = fs.createWriteStream(pdfPath);
+
+        pdfDoc.pipe(writeStream);
+        pdfDoc.end();
+
+        writeStream.on('finish', () => {
+          resolve(pdfPath);
+        });
+
+        writeStream.on('error', (err) => {
+          reject(err);
+        });
+      });
+    } catch (error) {
+      console.error('Error generando recibo de pago V2:', error);
+      return Promise.reject('Ocurrió un error al generar el recibo de pago V2');
+    }
+  }
+
+  private formatearFechaCorta(fecha: string | Date): string {
+    if (!fecha) return '';
+
+    const date = new Date(fecha);
+    if (isNaN(date.getTime())) return '';
+
+    return date.toLocaleDateString('es-EC', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+    });
+  }
+
+  private static titleCounter = 0;
+
+  private generateAutoIncrementalTitle(): string {
+    PDFGeneratorService.titleCounter++;
+    return PDFGeneratorService.titleCounter.toString().padStart(6, '0');
+  }
 }

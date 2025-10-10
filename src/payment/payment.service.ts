@@ -190,6 +190,6 @@ export class PaymentService {
 
   async generateReceipt(id: string): Promise<string> {
     const payment = await this.findOne(id);
-    return await this.pdfGeneratorService.generarReciboPago(payment);
+    return await this.pdfGeneratorService.generarReciboPagoV2(payment);
   }
 }
