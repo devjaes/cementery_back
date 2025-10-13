@@ -9,7 +9,7 @@ import { UpdateBloqueDto } from './dto/update-bloque.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Bloque } from './entities/bloque.entity';
 import { Cementerio } from 'src/cementerio/entities/cementerio.entity';
-import { Like, Repository } from 'typeorm';
+import { Like, Repository, Not } from 'typeorm';
 
 @Injectable()
 export class BloquesService {
@@ -35,16 +35,17 @@ export class BloquesService {
         throw new NotFoundException('Cementerio no encontrado');
       }
 
-      // Verifica si ya existe un bloque con el mismo nombre en el cementerio
+      // Verifica si ya existe un bloque con el mismo nombre en el cementerio (solo activos)
       const existente = await this.bloqueRepository.findOne({
         where: { 
           nombre: createBloqueDto.nombre,
-          id_cementerio: { id_cementerio: createBloqueDto.id_cementerio }
+          id_cementerio: { id_cementerio: createBloqueDto.id_cementerio },
+          estado: Not('Inactivo'), // Solo verificar contra bloques activos
         },
       });
       if (existente) {
         throw new BadRequestException(
-          'Ya existe un bloque con ese nombre en el cementerio',
+          'Ya existe un bloque activo con ese nombre en el cementerio',
         );
       }
 
@@ -66,11 +67,12 @@ export class BloquesService {
   }
 
   /**
-   * Obtiene todos los bloques
+   * Obtiene todos los bloques activos
    */
   async findAll() {
     try {
       const bloques = await this.bloqueRepository.find({
+        where: { estado: Not('Inactivo') }, // Solo bloques activos
         relations: ['id_cementerio'],
       });
       return { bloques };
@@ -82,12 +84,15 @@ export class BloquesService {
   }
 
   /**
-   * Obtiene bloques por ID de cementerio
+   * Obtiene bloques activos por ID de cementerio
    */
   async findByCementerio(id_cementerio: string) {
     try {
       const bloques = await this.bloqueRepository.find({
-        where: { id_cementerio: { id_cementerio } },
+        where: { 
+          id_cementerio: { id_cementerio },
+          estado: Not('Inactivo'), // Solo bloques activos
+        },
         relations: ['id_cementerio'],
       });
       return { bloques };
@@ -99,16 +104,19 @@ export class BloquesService {
   }
 
   /**
-   * Obtiene un bloque por ID
+   * Obtiene un bloque por ID (solo si está activo)
    */
   async findOne(id: string) {
     try {
       const bloque = await this.bloqueRepository.findOne({
-        where: { id_bloque: id },
+        where: { 
+          id_bloque: id,
+          estado: Not('Inactivo'), // Solo bloques activos
+        },
         relations: ['id_cementerio', 'nichos'],
       });
       if (!bloque) {
-        throw new NotFoundException('Bloque no encontrado');
+        throw new NotFoundException('Bloque no encontrado o inactivo');
       }
       return { bloque };
     } catch (error) {
@@ -122,16 +130,19 @@ export class BloquesService {
   }
 
   /**
-   * Actualiza un bloque
+   * Actualiza un bloque (solo si está activo)
    */
   async update(id: string, updateBloqueDto: UpdateBloqueDto) {
     try {
       const bloque = await this.bloqueRepository.findOne({
-        where: { id_bloque: id },
+        where: { 
+          id_bloque: id,
+          estado: Not('Inactivo'), // Solo actualizar bloques activos
+        },
         relations: ['id_cementerio'],
       });
       if (!bloque) {
-        throw new NotFoundException('Bloque no encontrado');
+        throw new NotFoundException('Bloque no encontrado o inactivo');
       }
 
       let cementerio = bloque.id_cementerio;
@@ -147,19 +158,20 @@ export class BloquesService {
         cementerio = nuevoCementerio;
       }
 
-      // Verifica si hay conflicto de nombres en el mismo cementerio
+      // Verifica si hay conflicto de nombres en el mismo cementerio (solo activos)
       if (updateBloqueDto.nombre) {
         const existente = await this.bloqueRepository.findOne({
           where: { 
             nombre: updateBloqueDto.nombre,
             id_cementerio: { 
               id_cementerio: cementerio.id_cementerio 
-            }
+            },
+            estado: Not('Inactivo'), // Solo verificar contra bloques activos
           },
         });
         if (existente && existente.id_bloque !== id) {
           throw new BadRequestException(
-            'Ya existe un bloque con ese nombre en el cementerio',
+            'Ya existe un bloque activo con ese nombre en el cementerio',
           );
         }
       }
@@ -206,18 +218,24 @@ export class BloquesService {
   async remove(id: string) {
     try {
       const bloque = await this.bloqueRepository.findOne({
-        where: { id_bloque: id },
+        where: { 
+          id_bloque: id,
+          estado: Not('Inactivo'), // Solo eliminar bloques activos
+        },
         relations: ['nichos'],
       });
       if (!bloque) {
-        throw new NotFoundException('Bloque no encontrado');
+        throw new NotFoundException('Bloque no encontrado o ya está inactivo');
       }
 
       // Verificar si el bloque tiene nichos asociados
       if (bloque.nichos && bloque.nichos.length > 0) {
-        throw new BadRequestException(
-          'No se puede eliminar el bloque porque tiene nichos asociados',
-        );
+        const nichosActivos = bloque.nichos.filter(n => n.estado !== 'Inactivo');
+        if (nichosActivos.length > 0) {
+          throw new BadRequestException(
+            `No se puede eliminar el bloque porque tiene ${nichosActivos.length} nicho(s) activo(s) asociado(s)`,
+          );
+        }
       }
 
       // Soft delete: cambiar estado a inactivo
@@ -239,7 +257,10 @@ export class BloquesService {
   async search(nombre: string) {
     try {
       const bloques = await this.bloqueRepository.find({
-        where: { nombre: Like(`%${nombre}%`) },
+        where: { 
+          nombre: Like(`%${nombre}%`),
+          estado: Not('Inactivo'), // Solo buscar bloques activos
+        },
         relations: ['id_cementerio'],
       });
       return { bloques };
