@@ -42,12 +42,10 @@ export class PaymentController {
         'Content-Disposition',
         `attachment; filename="recibo-pago-${payment.paymentId}.pdf"`,
       );
+      res.setHeader('X-Payment-Data', JSON.stringify(payment));
+      res.setHeader('Access-Control-Expose-Headers', 'X-Payment-Data');
 
-      return res.sendFile(receiptPath, {
-        headers: {
-          'X-Payment-Data': JSON.stringify(payment),
-        },
-      });
+      return res.sendFile(receiptPath);
     } catch (error) {
       // Log the error if desired, e.g., console.error(error);
       return res.status(500).json({
