@@ -7,13 +7,10 @@ import {
   Param,
   Delete,
   Query,
-  UseGuards,
 } from '@nestjs/common';
 import { BloquesService } from './bloques.service';
 import { CreateBloqueDto } from './dto/create-bloque.dto';
 import { UpdateBloqueDto } from './dto/update-bloque.dto';
-import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
-import { RolesGuard } from 'src/auth/roles.guard';
 import {
   ApiTags,
   ApiOperation,
@@ -37,7 +34,6 @@ export class BloquesController {
   constructor(private readonly bloquesService: BloquesService) {}
 
   @Post()
-  // @UseGuards(JwtAuthGuard, RolesGuard)
   @ApiOperation({ summary: 'Crear nuevo bloque' })
   @ApiBody({ type: CreateBloqueDto })
   @ApiCreatedResponse({
@@ -89,7 +85,6 @@ export class BloquesController {
   }
 
   @Patch(':id')
-  // @UseGuards(JwtAuthGuard, RolesGuard)
   @ApiOperation({ summary: 'Actualizar bloque' })
   @ApiParam({ name: 'id', description: 'ID del bloque' })
   @ApiBody({ type: UpdateBloqueDto })
@@ -103,7 +98,6 @@ export class BloquesController {
   }
 
   @Delete(':id')
-  // @UseGuards(JwtAuthGuard, RolesGuard)
   @ApiOperation({ summary: 'Eliminar bloque' })
   @ApiParam({ name: 'id', description: 'ID del bloque' })
   @ApiOkResponse({ description: 'Bloque eliminado exitosamente' })
