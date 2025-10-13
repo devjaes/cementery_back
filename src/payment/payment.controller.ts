@@ -31,22 +31,30 @@ export class PaymentController {
     @Body() createPaymentDto: CreatePaymentDto,
     @Res() res: Response,
   ) {
-    const payment = await this.paymentService.create(createPaymentDto);
-    const receiptPath = await this.paymentService.generateReceipt(
-      payment.paymentId,
-    );
+    try {
+      const payment = await this.paymentService.create(createPaymentDto);
+      const receiptPath = await this.paymentService.generateReceipt(
+        payment.paymentId,
+      );
 
-    res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader(
-      'Content-Disposition',
-      `attachment; filename="recibo-pago-${payment.paymentId}.pdf"`,
-    );
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader(
+        'Content-Disposition',
+        `attachment; filename="recibo-pago-${payment.paymentId}.pdf"`,
+      );
 
-    return res.sendFile(receiptPath, {
-      headers: {
-        'X-Payment-Data': JSON.stringify(payment),
-      },
-    });
+      return res.sendFile(receiptPath, {
+        headers: {
+          'X-Payment-Data': JSON.stringify(payment),
+        },
+      });
+    } catch (error) {
+      // Log the error if desired, e.g., console.error(error);
+      return res.status(500).json({
+        message: 'Failed to generate payment receipt.',
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
   }
 
   @Get()
