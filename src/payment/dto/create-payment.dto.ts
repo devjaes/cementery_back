@@ -6,6 +6,7 @@ import {
   IsString,
   IsUUID,
   Min,
+  Matches,
 } from 'class-validator';
 
 export class CreatePaymentDto {
@@ -39,4 +40,26 @@ export class CreatePaymentDto {
   @IsString()
   @IsOptional()
   observations?: string;
+
+  @IsString()
+  @IsNotEmpty()
+  @Matches(/^\d{10}$/, {
+    message: 'La cédula debe tener exactamente 10 dígitos',
+  })
+  buyerDocument: string;
+
+  @IsString()
+  @IsNotEmpty()
+  @Matches(
+    /^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]{2,}\s[A-Za-zÁÉÍÓÚáéíóúÑñ\s]{2,}\s[A-Za-zÁÉÍÓÚáéíóúÑñ\s]{2,}\s[A-Za-zÁÉÍÓÚáéíóúÑñ\s]{2,}$/,
+    {
+      message:
+        'El nombre debe contener 2 nombres y 2 apellidos separados por espacios',
+    },
+  )
+  buyerName: string;
+
+  @IsString()
+  @IsOptional()
+  buyerDirection?: string;
 }
