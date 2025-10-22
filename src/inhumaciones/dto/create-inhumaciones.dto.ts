@@ -1,9 +1,13 @@
-import { IsDate, IsNotEmpty, IsString, IsOptional } from 'class-validator';
+import { IsDate, IsNotEmpty, IsString, IsOptional, IsUUID, ValidateNested, IsObject } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
 import { Nicho } from 'src/nicho/entities/nicho.entity';
 import { Persona } from 'src/personas/entities/persona.entity';
 import { DeepPartial } from 'typeorm';
 import { RequisitosInhumacion } from 'src/requisitos-inhumacion/entities/requisitos-inhumacion.entity';
+
+// DTO para los documentos requeridos
+
 
 export class CreateInhumacionDto {
   @ApiProperty({
@@ -79,12 +83,7 @@ export class CreateInhumacionDto {
   @IsNotEmpty()
   codigo_inhumacion: string;
 
-  @ApiProperty({
-    description: 'Estado de la inhumación',
-    enum: ['Realizada', 'Pendiente'],
-    example: 'Programada',
-    required: true,
-  })
+
   @IsString()
   @IsNotEmpty()
   estado: string;

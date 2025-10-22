@@ -12,6 +12,8 @@ import { Inhumacion } from './entities/inhumacion.entity';
 import { UpdateInhumacionDto } from './dto/update-inhumacione.dto';
 import { HuecosNicho } from 'src/huecos-nichos/entities/huecos-nicho.entity';
 import { Persona } from 'src/personas/entities/persona.entity';
+import * as fs from 'fs';
+import * as path from 'path';
 
 @Injectable()
 export class InhumacionesService {
@@ -524,4 +526,5 @@ export class InhumacionesService {
       .replace(/[\u0300-\u036f]/g, '')
       .trim();
   }
+
 }

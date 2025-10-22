@@ -8,7 +8,10 @@ import {
   Delete,
   Patch,
   UseGuards,
+  UseInterceptors,
+  UploadedFiles,
 } from '@nestjs/common';
+import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { InhumacionesService } from './inhumaciones.service';
 import { Inhumacion } from './entities/inhumacion.entity';
 import { UpdateInhumacionDto } from './dto/update-inhumacione.dto';
@@ -24,6 +27,7 @@ import {
   ApiNotFoundResponse,
   ApiBadRequestResponse,
   ApiBearerAuth,
+  ApiConsumes,
 } from '@nestjs/swagger';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 import { RolesGuard } from 'src/auth/roles.guard';
@@ -232,4 +236,5 @@ export class InhumacionesController {
   findFallecidos(@Param('busqueda') busqueda: string) {
     return this.service.findByBusquedaFallecido(busqueda);
   }
+
 }
