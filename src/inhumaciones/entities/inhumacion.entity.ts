@@ -51,16 +51,6 @@ export class Inhumacion {
   @Column()
   codigo_inhumacion: string;
 
-  @Column({ type: 'json', nullable: true })
-  documentos: {
-    solicitud_firmada?: string;
-    cedula_solicitante?: string;
-    certificado_defuncion_civil?: string;
-    certificado_defuncion_medico?: string;
-    titulo_propiedad?: string;
-    comprobante_pago?: string;
-    autorizacion_movilizacion?: string;
-  };
 
   @OneToOne(() => RequisitosInhumacion, (requisitos) => requisitos.inhumacion, { nullable: true })
   @JoinColumn({ name: 'id_requisitos_inhumacion' })

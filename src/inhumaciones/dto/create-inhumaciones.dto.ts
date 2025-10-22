@@ -147,6 +147,8 @@ export class CreateInhumacionDto {
   @IsNotEmpty()
   codigo_inhumacion: string;
 
+
+  //Documentos requeridos para inhumación
   @ApiPropertyOptional({
     description: 'Documentos requeridos para la inhumación',
     type: DocumentosInhumacionDto,

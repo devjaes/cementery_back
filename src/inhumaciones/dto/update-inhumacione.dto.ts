@@ -16,11 +16,4 @@ export class UpdateInhumacionDto extends PartialType(CreateInhumacionDto) {
   @IsNotEmpty()
   id_inhumacion: string;
 
-  @ApiPropertyOptional({
-  description: 'Ruta/URL del archivo adjunto',
-  required: false,
-  })
-  @IsString()
-  @IsOptional()
-  archivo_url?: string;
 }
