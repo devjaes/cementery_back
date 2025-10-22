@@ -7,7 +7,11 @@ import {
   Param,
   Delete,
   Res,
+  UseInterceptors,
+  UploadedFile,
+  BadRequestException,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { RequisitosInhumacionService } from './requisitos-inhumacion.service';
 import { CreateRequisitosInhumacionDto } from './dto/create-requisitos-inhumacion.dto';
 import { UpdateRequisitosInhumacionDto } from './dto/update-requisitos-inhumacion.dto';
@@ -19,6 +23,8 @@ import {
   ApiParam,
   ApiConsumes,
   ApiBadRequestResponse,
+  ApiOkResponse,
+  ApiNotFoundResponse,
 } from '@nestjs/swagger';
 import { PDFGeneratorService } from 'src/shared/pdf-generator/pdf-generator.service';
 import { Response } from 'express';
@@ -342,5 +348,71 @@ export class RequisitosInhumacionController {
   })
   findFallecidos(@Param('busqueda') busqueda: string) {
     return this.requisitosInhumacionService.findByBusquedaFallecido(busqueda);
+  }
+
+  @Post(':id/documentos')
+  @UseInterceptors(FileInterceptor('documento_consolidado'))
+  @ApiConsumes('multipart/form-data')
+  @ApiOperation({
+    summary: 'Subir documento PDF consolidado para un requisito de inhumación',
+    description:
+      'Permite subir un único PDF que contiene todos los documentos requeridos (solicitud, cédula, certificados, título, comprobante)',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'ID del requisito de inhumación',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+  })
+  @ApiBody({
+    description: 'PDF consolidado con todos los documentos requeridos',
+    schema: {
+      type: 'object',
+      properties: {
+        documento_consolidado: {
+          type: 'string',
+          format: 'binary',
+          description:
+            'Archivo PDF consolidado que incluye: solicitud firmada, cédula del solicitante, certificados de defunción (civil y médico), título de propiedad, comprobante de pago',
+        },
+      },
+    },
+  })
+  @ApiOkResponse({
+    description: 'Documento consolidado subido exitosamente',
+  })
+  @ApiNotFoundResponse({
+    description: 'Requisito de inhumación no encontrado',
+  })
+  @ApiBadRequestResponse({
+    description: 'No se recibió ningún archivo o el archivo no es válido',
+  })
+  async subirDocumentoConsolidado(
+    @Param('id') id: string,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    if (!file) {
+      throw new BadRequestException('No se recibió ningún archivo');
+    }
+
+    // Validar que sea un PDF
+    if (file.mimetype !== 'application/pdf') {
+      throw new BadRequestException(
+        'El archivo debe ser un PDF. Tipo recibido: ' + file.mimetype,
+      );
+    }
+
+    const requisito =
+      await this.requisitosInhumacionService.guardarDocumentoConsolidado(
+        id,
+        file,
+      );
+
+    return {
+      message: 'Documento consolidado subido exitosamente',
+      requisito: {
+        id: requisito.id_requsitoInhumacion,
+        documentos_consolidados: requisito.documentos_consolidados,
+      },
+    };
   }
 }

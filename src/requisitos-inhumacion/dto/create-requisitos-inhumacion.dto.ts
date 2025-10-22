@@ -54,7 +54,8 @@ export class CreateRequisitosInhumacionDto {
   @IsOptional()
   observacionSolicitante?: string;
 
-  // D) Checklist de requisitos
+
+  // E) Checklist de requisitos
   @ApiProperty({ example: true })
   @IsBoolean()
   copiaCertificadoDefuncion: boolean;
@@ -130,7 +131,7 @@ export class CreateRequisitosInhumacionDto {
   @IsOptional()
   observacionOficioSolicitud?: string;
 
-  // E) Datos del nicho/fosa/sillio
+  // F) Datos del nicho/fosa/sillio
   @ApiProperty({
     description: 'ID del hueco o nicho',
     example: { id_detalle_hueco: 'uuid-hueco-nicho' },
@@ -138,7 +139,7 @@ export class CreateRequisitosInhumacionDto {
   @IsNotEmpty()
   id_hueco_nicho: DeepPartial<HuecosNicho>;
 
-  // F) Datos del fallecido
+  // G) Datos del fallecido
   @ApiProperty({
     description: 'ID de la persona fallecida',
     example: { id_persona: 'uuid-fallecido' },
@@ -163,4 +164,14 @@ export class CreateRequisitosInhumacionDto {
   })
   @IsString()
   nombreAdministradorNicho: string;
+
+  // H) Documento consolidado (opcional, se sube después)
+  @ApiPropertyOptional({
+    description: 'Ruta del PDF consolidado con todos los documentos requeridos (solicitud, cédula, certificados, título, comprobante)',
+    example: '/uploads/requisitos/REQ-2023-001/documentos_1759496620072.pdf',
+    type: 'string',
+  })
+  @IsString()
+  @IsOptional()
+  documentos_consolidados?: string;
 }

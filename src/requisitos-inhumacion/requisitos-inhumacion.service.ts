@@ -16,6 +16,8 @@ import { HuecosNicho } from 'src/huecos-nichos/entities/huecos-nicho.entity';
 import { Persona } from 'src/personas/entities/persona.entity';
 import { Nicho } from 'src/nicho/entities/nicho.entity';
 import { Cementerio } from 'src/cementerio/entities/cementerio.entity';
+import { promises as fs } from 'fs';
+import * as path from 'path';
 
 @Injectable()
 export class RequisitosInhumacionService {
@@ -649,5 +651,135 @@ export class RequisitosInhumacionService {
       .normalize('NFD')
       .replace(/[\u0300-\u036f]/g, '')
       .trim();
+  }
+
+  /**
+   * Guarda el documento consolidado (PDF) en el servidor
+   * y actualiza la ruta en la base de datos
+   */
+  async guardarDocumentoConsolidado(
+    id: string,
+    file: Express.Multer.File,
+  ): Promise<RequisitosInhumacion> {
+    try {
+      // 1. Buscar el requisito de inhumación
+      const requisito = await this.repo.findOne({
+        where: { id_requsitoInhumacion: id },
+        relations: ['id_fallecido'],
+      });
+
+      if (!requisito) {
+        throw new NotFoundException(
+          `Requisito de inhumación con ID ${id} no encontrado`,
+        );
+      }
+
+      // 2. Validar que sea un PDF
+      if (file.mimetype !== 'application/pdf') {
+        throw new BadRequestException('Solo se permiten archivos PDF');
+      }
+
+      // 3. Generar código único para la carpeta (basado en ID o fecha)
+      const year = new Date().getFullYear();
+      const codigoRequisito = `REQ-${year}-${requisito.id_requsitoInhumacion.slice(0, 8)}`;
+
+      // 4. Crear ruta de almacenamiento
+      const uploadPath = path.join(
+        process.cwd(),
+        'uploads',
+        'requisitos',
+        codigoRequisito,
+      );
+
+      // 5. Crear carpeta si no existe (async)
+      try {
+        await fs.mkdir(uploadPath, { recursive: true });
+      } catch (error) {
+        throw new BadRequestException('Error al crear directorio para documentos');
+      }
+
+      // 6. Eliminar documento anterior si existe
+      if (requisito.documentos_consolidados) {
+        await this.eliminarArchivoFisico(requisito.documentos_consolidados);
+      }
+
+      // 7. Guardar nuevo archivo (async)
+      const timestamp = Date.now();
+      const filename = `documentos_${timestamp}${path.extname(file.originalname)}`;
+      const filePath = path.join(uploadPath, filename);
+      
+      try {
+        await fs.writeFile(filePath, file.buffer);
+      } catch (error) {
+        throw new BadRequestException('Error al guardar el archivo');
+      }
+
+      // 8. Guardar ruta relativa en la base de datos
+      const relativePath = `/uploads/requisitos/${codigoRequisito}/${filename}`;
+      requisito.documentos_consolidados = relativePath;
+
+      // 9. Actualizar en la BD
+      const requisitoActualizado = await this.repo.save(requisito);
+
+      return requisitoActualizado;
+    } catch (error) {
+      if (error instanceof NotFoundException) throw error;
+      if (error instanceof BadRequestException) throw error;
+      throw new InternalServerErrorException(
+        'Error al guardar el documento consolidado: ' + (error.message || error),
+      );
+    }
+  }
+
+  /**
+   * Elimina archivo físico del servidor (método privado auxiliar)
+   */
+  private async eliminarArchivoFisico(rutaRelativa: string): Promise<void> {
+    try {
+      const fullPath = path.join(process.cwd(), rutaRelativa);
+      
+      // Verificar existencia y eliminar con versión async
+      try {
+        await fs.access(fullPath);
+        await fs.unlink(fullPath);
+      } catch {
+        // Archivo no existe, no hacer nada
+      }
+    } catch (error) {
+      console.error('Error al eliminar archivo físico:', error);
+      // No lanzar error, solo registrar
+    }
+  }
+
+  /**
+   * Elimina el documento consolidado del servidor
+   */
+  async eliminarDocumentoConsolidado(id: string): Promise<void> {
+    try {
+      const requisito = await this.repo.findOne({
+        where: { id_requsitoInhumacion: id },
+      });
+
+      if (!requisito) {
+        throw new NotFoundException(
+          `Requisito de inhumación con ID ${id} no encontrado`,
+        );
+      }
+
+      // Eliminar archivo si existe
+      if (requisito.documentos_consolidados) {
+        await this.eliminarArchivoFisico(requisito.documentos_consolidados);
+
+        // Actualizar BD
+        requisito.documentos_consolidados = null as any;
+        await this.repo.save(requisito);
+      }
+    } catch (error) {
+      if (error instanceof NotFoundException) throw error;
+      throw new InternalServerErrorException(
+        'Error al eliminar el documento consolidado: ' +
+          (error.message || error),
+      );
+    }
   }
 }
