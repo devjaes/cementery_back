@@ -118,4 +118,7 @@ export class RequisitosInhumacion {
 
   @Column({ type: 'varchar', length: 100 })
   nombreAdministradorNicho: string;
+
+  @Column({ type: 'text', nullable: true })
+  documentos_consolidados: string;
 }

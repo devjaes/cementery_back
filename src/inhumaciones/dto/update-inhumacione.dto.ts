@@ -15,4 +15,5 @@ export class UpdateInhumacionDto extends PartialType(CreateInhumacionDto) {
   @IsString()
   @IsNotEmpty()
   id_inhumacion: string;
+
 }
