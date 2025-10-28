@@ -1,4 +1,4 @@
-import { IsDate, IsNotEmpty, IsString, IsEnum } from 'class-validator';
+import { IsDate, IsNotEmpty, IsString, IsEnum, IsBoolean, IsOptional } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { Nicho } from 'src/nicho/entities/nicho.entity';
 import { Persona } from 'src/personas/entities/persona.entity';
@@ -76,4 +76,14 @@ export class CreatePropietarioNichoDto {
   @IsEnum(TipoPropietario)
   @IsNotEmpty()
   tipo: TipoPropietario;
+
+  @ApiProperty({
+    description: 'Estado activo del propietario',
+    example: true,
+    required: false,
+    default: true,
+  })
+  @IsBoolean()
+  @IsOptional()
+  activo?: boolean;
 }
