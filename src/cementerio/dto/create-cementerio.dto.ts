@@ -1,5 +1,7 @@
-import { IsNotEmpty, IsString } from 'class-validator';
+import { IsNotEmpty, IsString, IsArray, IsOptional, ValidateNested } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
+import { CreateBloqueEnCementerioDto } from './create-bloque-en-cementerio.dto';
 
 export class CreateCementerioDto {
   @ApiProperty({
@@ -37,4 +39,15 @@ export class CreateCementerioDto {
   @IsString()
   @IsNotEmpty()
   responsable: string;
+
+  @ApiProperty({
+    description: 'Bloques del cementerio',
+    type: [CreateBloqueEnCementerioDto],
+    required: false,
+  })
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => CreateBloqueEnCementerioDto)
+  bloques?: CreateBloqueEnCementerioDto[];
 }
