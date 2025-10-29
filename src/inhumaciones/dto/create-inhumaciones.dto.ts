@@ -83,6 +83,16 @@ export class CreateInhumacionDto {
   @IsNotEmpty()
   codigo_inhumacion: string;
 
+  @ApiPropertyOptional({
+    description: 'Estado de pago de la inhumación',
+    enum: ['pending', 'paid'],
+    example: 'pending',
+    default: 'pending',
+    required: false,
+  })
+  @IsOptional()
+  @IsString()
+  paymentStatus?: 'pending' | 'paid';
 
   @IsString()
   @IsNotEmpty()
