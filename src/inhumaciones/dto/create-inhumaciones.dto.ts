@@ -1,4 +1,4 @@
-import { IsDate, IsNotEmpty, IsString, IsOptional, IsUUID, ValidateNested, IsObject } from 'class-validator';
+import { IsDate, IsNotEmpty, IsString, IsOptional, IsUUID, ValidateNested, IsObject, IsEnum } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { Nicho } from 'src/nicho/entities/nicho.entity';
@@ -91,7 +91,9 @@ export class CreateInhumacionDto {
     required: false,
   })
   @IsOptional()
-  @IsString()
+  @IsEnum(['pending', 'paid'], {
+    message: 'El estado de pago debe ser "pending" o "paid"',
+  })
   paymentStatus?: 'pending' | 'paid';
 
   @IsString()
