@@ -8,11 +8,14 @@ import {
   Delete,
   UseGuards,
   BadRequestException,
+  UseInterceptors,
+  UploadedFile,
 } from '@nestjs/common';
 import { HuecosNichosService } from './huecos-nichos.service';
 import { CreateHuecosNichoDto } from './dto/create-huecos-nicho.dto';
 import { UpdateHuecosNichoDto } from './dto/update-huecos-nicho.dto';
-import { ApiBody, ApiOperation, ApiParam, ApiResponse } from '@nestjs/swagger';
+import { ApiBody, ApiConsumes, ApiOperation, ApiParam, ApiResponse } from '@nestjs/swagger';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { HuecosNicho } from './entities/huecos-nicho.entity';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 import { RolesGuard } from 'src/auth/roles.guard';
@@ -28,23 +31,20 @@ export class HuecosNichosController {
     description:
       'Crea un hueco automáticamente asignando el siguiente número disponible para el nicho. El estado por defecto es "Disponible".',
   })
+  @ApiConsumes('multipart/form-data')
+  @UseInterceptors(FileInterceptor('file'))
   @ApiBody({
-    type: CreateHuecosNichoDto,
-    examples: {
-      soloRequerido: {
-        summary: 'Solo campo requerido',
-        value: {
-          id_nicho: '123e4567-e89b-12d3-a456-426614174001',
-        },
+    description: 'Crear hueco con PDF de ampliación (obligatorio)',
+    schema: {
+      type: 'object',
+      properties: {
+        id_nicho: { type: 'string', format: 'uuid' },
+        estado: { type: 'string', enum: ['Disponible', 'Ocupado', 'Reservado'] },
+        id_fallecido: { type: 'string', format: 'uuid', nullable: true },
+        observacion_ampliacion: { type: 'string', nullable: true, maxLength: 500 },
+        file: { type: 'string', format: 'binary', description: 'PDF de ampliación (obligatorio)' },
       },
-      conOpcionales: {
-        summary: 'Con campos opcionales',
-        value: {
-          id_nicho: '123e4567-e89b-12d3-a456-426614174001',
-          estado: 'Reservado',
-          id_fallecido: '123e4567-e89b-12d3-a456-426614174009',
-        },
-      },
+      required: ['id_nicho', 'file'],
     },
   })
   @ApiResponse({
@@ -52,8 +52,11 @@ export class HuecosNichosController {
     description:
       'Hueco creado exitosamente. El número de hueco se asigna automáticamente basado en los huecos existentes.',
   })
-  create(@Body() createHuecosNichoDto: CreateHuecosNichoDto) {
-    return this.huecosNichosService.create(createHuecosNichoDto);
+  create(
+    @Body() createHuecosNichoDto: CreateHuecosNichoDto,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    return this.huecosNichosService.create(createHuecosNichoDto, file);
   }
 
   @Get()
@@ -92,20 +95,30 @@ export class HuecosNichosController {
   // @UseGuards(JwtAuthGuard, RolesGuard)
   @ApiOperation({ summary: 'Actualizar un hueco' })
   @ApiParam({ name: 'id', example: '123e4567-e89b-12d3-a456-426614174000' })
+  @ApiConsumes('multipart/form-data')
+  @UseInterceptors(FileInterceptor('file'))
   @ApiBody({
-    type: UpdateHuecosNichoDto,
-    examples: {
-      ejemplo1: {
-        value: {
-          id_fallecido_inhumado: '123e4567-e89b-12d3-a456-426614174009',
-        },
+    description: 'Actualizar hueco; el PDF es opcional y reemplaza al existente si se envía',
+    schema: {
+      type: 'object',
+      properties: {
+        id_detalle_hueco: { type: 'string', format: 'uuid' },
+        estado: { type: 'string', enum: ['Disponible', 'Ocupado', 'Reservado'], nullable: true },
+        id_fallecido: { type: 'string', format: 'uuid', nullable: true },
+        observacion_ampliacion: { type: 'string', nullable: true, maxLength: 500 },
+        file: { type: 'string', format: 'binary', description: 'PDF de ampliación (opcional)' },
       },
+      required: ['id_detalle_hueco'],
     },
   })
   @ApiResponse({ status: 200, description: 'Hueco actualizado' })
   @ApiResponse({ status: 404, description: 'Hueco no encontrado' })
-  update(@Param('id') id: string, @Body() updateDto: UpdateHuecosNichoDto) {
-    return this.huecosNichosService.update(id, updateDto);
+  update(
+    @Param('id') id: string,
+    @Body() updateDto: UpdateHuecosNichoDto,
+    @UploadedFile() file?: Express.Multer.File,
+  ) {
+    return this.huecosNichosService.update(id, updateDto, file);
   }
 
   @Delete(':id')
