@@ -9,54 +9,34 @@ import {
   Query,
   HttpStatus,
   HttpException,
+  Res,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiQuery } from '@nestjs/swagger';
 import { NicheSalesService } from './sales.service';
 import { ReservarNichoDto } from './dto/reservar-nicho.dto';
 import { ConfirmarVentaNichoDto } from './dto/confirmar-venta-nicho.dto';
 import { EstadoNicho } from './enum/estadoNicho.enum';
+import { PaymentService } from 'src/payment/payment.service';
+import { Response } from 'express';
 
 @ApiTags('Ventas de Nichos')
 @Controller('nicho-sales')
 export class NicheSalesController {
-  constructor(private readonly nicheSalesService: NicheSalesService) {}
+  constructor(private readonly nicheSalesService: NicheSalesService,
+    private readonly paymentService: PaymentService
+  ) {}
 
-  @Post('reservar')
+@Post('reservar')
   @ApiOperation({
     summary: 'Reservar un nicho',
     description: 'Reserva un nicho para un cliente y crea una orden de pago',
   })
   @ApiResponse({
     status: 201,
-    description: 'Nicho reservado exitosamente',
+    description: 'Nicho reservado exitosamente (PDF generado)',
     schema: {
       example: {
-        nicho: {
-          id: 'uuid',
-          sector: 'A',
-          fila: '1',
-          numero: '001',
-          estado: 'Reservado',
-          cementerio: 'Cementerio Central',
-        },
-        cliente: {
-          id: 'uuid',
-          nombres: 'Juan',
-          apellidos: 'Pérez',
-          cedula: '1234567890',
-        },
-        ordenPago: {
-          id: 'uuid',
-          codigo: 'PAY-241010-123456-001',
-          monto: 500.00,
-          estado: 'pending',
-          fechaGeneracion: '2024-10-10T10:00:00Z',
-          comprador: {
-            documento: '1234567890',
-            nombre: 'Juan Pérez',
-            direccion: 'Calle Principal 123',
-          },
-        },
+        message: 'Recibo generado correctamente',
       },
     },
   })
@@ -68,13 +48,36 @@ export class NicheSalesController {
     status: 404,
     description: 'Nicho o persona no encontrada',
   })
-  async reservarNicho(@Body() reservarNichoDto: ReservarNichoDto) {
+  async reservarNicho(
+    @Body() reservarNichoDto: ReservarNichoDto,
+    @Res() res: Response,
+  ) {
     try {
-      return await this.nicheSalesService.reservarNicho(reservarNichoDto);
+      // 1️⃣ Reservar el nicho y obtener la orden de pago
+      const reserva = await this.nicheSalesService.reservarNicho(reservarNichoDto);
+
+      // 2️⃣ Generar el recibo PDF
+      const receiptPath = await this.paymentService.generateReceipt(reserva.ordenPago.id);
+
+      // 3️⃣ Configurar los encabezados HTTP
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader(
+        'Content-Disposition',
+        `attachment; filename="recibo-reserva-${reserva.ordenPago.codigo}.pdf"`,
+      );
+      res.setHeader('X-Reserva-Data', JSON.stringify(reserva));
+      res.setHeader('Access-Control-Expose-Headers', 'X-Reserva-Data');
+
+      // 4️⃣ Enviar el PDF
+      return res.sendFile(receiptPath);
     } catch (error) {
+      console.error('Error al generar recibo:', error);
       throw new HttpException(
-        error.message,
-        error.status || HttpStatus.INTERNAL_SERVER_ERROR,
+        {
+          message: 'No se pudo generar el recibo de la reserva.',
+          error: error instanceof Error ? error.message : String(error),
+        },
+        HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
   }
