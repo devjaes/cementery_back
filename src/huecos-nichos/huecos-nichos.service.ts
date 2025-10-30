@@ -2,6 +2,7 @@ import {
   Injectable,
   NotFoundException,
   InternalServerErrorException,
+  BadRequestException,
 } from '@nestjs/common';
 import { CreateHuecosNichoDto } from './dto/create-huecos-nicho.dto';
 import { UpdateHuecosNichoDto } from './dto/update-huecos-nicho.dto';
@@ -18,8 +19,20 @@ export class HuecosNichosService {
   /**
    * Crea un nuevo hueco para un nicho
    */
-  async create(createHuecosNichoDto: CreateHuecosNichoDto) {
+  async create(
+    createHuecosNichoDto: CreateHuecosNichoDto,
+    file?: Express.Multer.File,
+  ) {
+    console.log('Crear hueco DTO:', createHuecosNichoDto);
     try {
+      if (!file) {
+        throw new BadRequestException(
+          'Se requiere un archivo PDF de ampliación (file)',
+        );
+      }
+      if (file.mimetype !== 'application/pdf') {
+        throw new BadRequestException('Solo se permiten archivos PDF');
+      }
       // Normalizar id_nicho si llega como string
       if (typeof createHuecosNichoDto.id_nicho === 'string') {
         createHuecosNichoDto.id_nicho = {
@@ -46,8 +59,43 @@ export class HuecosNichosService {
         .getCount();
       createHuecosNichoDto.num_hueco = count + 1;
 
+      // Guardar archivo en uploads/ampliaciones
+      const { promises: fs } = await import('fs');
+      const path = await import('path');
+      const year = new Date().getFullYear();
+      const codigoAmpliacion = `AMP-${year}-${Date.now()}`;
+      const uploadPath = path.join(
+        process.cwd(),
+        'uploads',
+        'ampliaciones',
+        codigoAmpliacion,
+      );
+
+      try {
+        await fs.mkdir(uploadPath, { recursive: true });
+      } catch (error) {
+        throw new BadRequestException('Error al crear directorio para PDF');
+      }
+
+      const timestamp = Date.now();
+      const ext = path.extname(file.originalname) || '.pdf';
+      const filename = `ampliacion_${timestamp}${ext}`;
+      const filePath = path.join(uploadPath, filename);
+
+      try {
+        await fs.writeFile(filePath, file.buffer);
+      } catch (error) {
+        throw new BadRequestException('Error al guardar el archivo PDF');
+      }
+
+      const relativePath = `/uploads/ampliaciones/${codigoAmpliacion}/${filename}`;
+
       // Crear y guardar el hueco
       const hueco = this.huecoRepository.create(createHuecosNichoDto);
+      (hueco as any).ruta_archivo_ampliacion = relativePath;
+      (hueco as any).observacion_ampliacion =
+        (createHuecosNichoDto as any).observacion_ampliacion ?? null;
+
       const savedHueco = await this.huecoRepository.save(hueco);
 
       // Actualizar el número de huecos en el nicho
@@ -175,10 +223,54 @@ export class HuecosNichosService {
   /**
    * Actualiza los datos de un hueco por su ID
    */
-  async update(id: string, updateDto: UpdateHuecosNichoDto) {
+  async update(id: string, updateDto: UpdateHuecosNichoDto, file?: Express.Multer.File) {
     try {
       const hueco = await this.findOne(id);
       Object.assign(hueco.hueco, updateDto);
+      
+      // Si llega nuevo PDF, reemplazarlo
+      if (file) {
+        if (file.mimetype !== 'application/pdf') {
+          throw new BadRequestException('Solo se permiten archivos PDF');
+        }
+
+        const { promises: fs } = await import('fs');
+        const path = await import('path');
+
+        const rutaAnterior = (hueco.hueco as any).ruta_archivo_ampliacion as string | undefined;
+        if (rutaAnterior) {
+          const fullPath = path.join(process.cwd(), rutaAnterior);
+          try {
+            await fs.access(fullPath);
+            await fs.unlink(fullPath);
+          } catch {}
+        }
+
+        const year = new Date().getFullYear();
+        const codigoAmpliacion = `AMP-${year}-${id.slice(0, 8)}`;
+        const uploadPath = path.join(process.cwd(), 'uploads', 'ampliaciones', codigoAmpliacion);
+        try {
+          await fs.mkdir(uploadPath, { recursive: true });
+        } catch (error) {
+          throw new BadRequestException('Error al crear directorio para PDF');
+        }
+
+        const timestamp = Date.now();
+        const ext = path.extname(file.originalname) || '.pdf';
+        const filename = `ampliacion_${timestamp}${ext}`;
+        const filePath = path.join(uploadPath, filename);
+        try {
+          await fs.writeFile(filePath, file.buffer);
+        } catch (error) {
+          throw new BadRequestException('Error al guardar el archivo PDF');
+        }
+        const relativePath = `/uploads/ampliaciones/${codigoAmpliacion}/${filename}`;
+        (hueco.hueco as any).ruta_archivo_ampliacion = relativePath;
+      }
+
+      if ((updateDto as any).observacion_ampliacion !== undefined) {
+        (hueco.hueco as any).observacion_ampliacion = (updateDto as any).observacion_ampliacion;
+      }
       const savedHueco = await this.huecoRepository.save(hueco.hueco);
       return {
         hueco: savedHueco,
