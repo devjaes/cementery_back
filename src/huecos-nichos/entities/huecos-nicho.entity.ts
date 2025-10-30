@@ -43,6 +43,12 @@ export class HuecosNicho {
   )
   requisitos_inhumacion: RequisitosInhumacion[];
 
+  @Column({ type: 'text', name: 'ruta_archivo_ampliacion' })
+  ruta_archivo_ampliacion: string;
+
+  @Column({ type: 'varchar', length: 500, name: 'observacion_ampliacion', nullable: true })
+  observacion_ampliacion?: string;
+
   @CreateDateColumn({ type: 'date' })
   fecha_creacion: Date;
 
