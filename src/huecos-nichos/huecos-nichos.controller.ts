@@ -10,7 +10,9 @@ import {
   BadRequestException,
   UseInterceptors,
   UploadedFile,
+  Res,
 } from '@nestjs/common';
+import { Response } from 'express';
 import { HuecosNichosService } from './huecos-nichos.service';
 import { CreateHuecosNichoDto } from './dto/create-huecos-nicho.dto';
 import { UpdateHuecosNichoDto } from './dto/update-huecos-nicho.dto';
@@ -154,5 +156,49 @@ export class HuecosNichosController {
     return this.huecosNichosService.findAllDisponiblesByCementerio(
       idCementerio,
     );
+  }
+
+  @Get(':id/archivo')
+  @ApiOperation({
+    summary: 'Descargar el archivo PDF de ampliación de un hueco',
+    description:
+      'Retorna el archivo PDF de ampliación asociado al hueco. Si no existe, retorna 404.',
+  })
+  @ApiParam({
+    name: 'id',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Archivo PDF descargado exitosamente',
+    content: {
+      'application/pdf': {
+        schema: {
+          type: 'string',
+          format: 'binary',
+        },
+      },
+    },
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Hueco no encontrado o archivo no disponible',
+  })
+  async descargarArchivo(@Param('id') id: string, @Res() res: Response) {
+    const filePath = await this.huecosNichosService.obtenerRutaArchivo(id);
+    if (!filePath) {
+      return res.status(404).json({
+        statusCode: 404,
+        message: 'Archivo de ampliación no encontrado para este hueco',
+      });
+    }
+    const path = await import('path');
+    const fullPath = path.join(process.cwd(), filePath);
+    return res.sendFile(fullPath, {
+      headers: {
+        'Content-Type': 'application/pdf',
+        'Content-Disposition': `attachment; filename="ampliacion-hueco-${id}.pdf"`,
+      },
+    });
   }
 }

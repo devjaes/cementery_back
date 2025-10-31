@@ -321,4 +321,24 @@ export class HuecosNichosService {
       );
     }
   }
+
+  /**
+   * Obtiene la ruta del archivo PDF de ampliación para un hueco
+   */
+  async obtenerRutaArchivo(id: string): Promise<string | null> {
+    try {
+      const hueco = await this.huecoRepository.findOne({
+        where: { id_detalle_hueco: id },
+        select: ['id_detalle_hueco', 'ruta_archivo_ampliacion'],
+      });
+      if (!hueco || !hueco.ruta_archivo_ampliacion) {
+        return null;
+      }
+      return hueco.ruta_archivo_ampliacion;
+    } catch (error) {
+      throw new InternalServerErrorException(
+        'Error al obtener la ruta del archivo: ' + (error.message || error),
+      );
+    }
+  }
 }
