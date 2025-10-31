@@ -23,7 +23,7 @@ export class HuecosNichosService {
     createHuecosNichoDto: CreateHuecosNichoDto,
     file?: Express.Multer.File,
   ) {
-    console.log('Crear hueco DTO:', createHuecosNichoDto);
+    //console.log('Crear hueco DTO:', createHuecosNichoDto);
     try {
       if (!file) {
         throw new BadRequestException(
