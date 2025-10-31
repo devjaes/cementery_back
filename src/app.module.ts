@@ -2,6 +2,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { Nicho } from './nicho/entities/nicho.entity';
 import { Exumacion } from './exumacion/entities/exumacion.entity';
+import { Mejora } from './mejoras/entities/mejora.entity';
 import { NichoModule } from './nicho/nicho.module';
 import { ExumacionModule } from './exumacion/exumacion.module';
 import { Inhumacion } from './inhumaciones/entities/inhumacion.entity';
@@ -25,6 +26,7 @@ import { RequisitosInhumacionModule } from './requisitos-inhumacion/requisitos-i
 import { SharedModule } from './shared/shared.module';
 import { PaymentModule } from './payment/payment.module';
 import { Payment } from './payment/entities/payment.entity';
+import { MejorasModule } from './mejoras/mejoras.module';
 import { BloquesModule } from './bloques/bloques.module';
 import { Bloque } from './bloques/entities/bloque.entity';
 
@@ -46,6 +48,7 @@ import { Bloque } from './bloques/entities/bloque.entity';
         Nicho,
         Exumacion,
         Inhumacion,
+  Mejora,
         Persona,
         PropietarioNicho,
         RequisitosInhumacion,
@@ -68,6 +71,7 @@ import { Bloque } from './bloques/entities/bloque.entity';
     RequisitosInhumacionModule,
     SharedModule,
     PaymentModule,
+    MejorasModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -1,0 +1,67 @@
+### 🏛 Datos Institucionales
+- **Entidad:** [Nombre del GAD Municipal]
+- **Dirección:** [Dirección correspondiente]
+- **Fecha de emisión:** [Fecha]
+- **Código de autorización:** [Código]
+
+---
+
+### 📋 Método de Solicitud
+- **Cementerio:** [Nombre del cementerio]
+- **Solicitud escrita:** ☒ / ☐
+- **Solicitud verbal (solo en caso de emergencia):** ☒ / ☐
+- **Panteonero a cargo:** [Nombre del responsable]
+
+---
+
+### 👤 Datos del Solicitante
+- **Nombre y Apellido:** [Nombre completo]
+- **Nº de Cédula de Identidad:** [Número de cédula]
+- **Dirección:** [Dirección del solicitante]
+- **Número de Celular:** [Número de contacto]
+- **Correo Electrónico:** [Correo electrónico]
+
+---
+
+### ⚰️ Datos de la Persona Fallecida
+- **Nombre y Apellido:** [Nombre completo]
+- **Fecha de Fallecimiento:** [Fecha]
+
+---
+
+### 🧱 Datos del Nicho/Fosa/Sitio
+- **Nombre del Propietario:** [Nombre completo]
+- **Número de nichos:** [Cantidad]
+- **Fecha de adquisición:** [Fecha]
+- **Lugar del nicho:** [Ubicación]
+- **Nombre del administrador:** [Nombre]
+- **Lugar del sitio / código:** [Código]
+- **Tipo de tenencia:** Propio ☒ / Arrendado ☐
+- **Observación:** [Descripción del trabajo]
+
+---
+
+### 🛠 Datos para Realizar la Acción
+- **Tipo de servicio a efectuar:** [Tipo de trabajo]
+- **Observación:** [Descripción]
+- **Fecha de inicio:** [Fecha]
+- **Fecha de fin:** [Fecha]
+- **Horario de trabajo:** [Horario]
+- **Condición:** [Cláusula sobre daños y responsabilidad]
+
+---
+
+### 📜 Disposición Final
+- **Autorización:** [Tipo de trabajo autorizado]
+- **Condición de incumplimiento:** [Medida en caso de incumplimiento]
+- **Normativa aplicable:** [Referencia a ordenanza municipal]
+- **Obligaciones post-obra:** [Retiro de residuos, reparación de daños]
+- **Escombrera municipal:** [Ubicación]
+
+---
+
+### ✍️ Firmas
+- **Solicitante responsable:** [Nombre]
+- **Aprobado por:** [Nombre y cargo]
+
+---
