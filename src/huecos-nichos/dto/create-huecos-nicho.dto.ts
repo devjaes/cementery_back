@@ -51,4 +51,16 @@ export class CreateHuecosNichoDto {
   })
   @IsOptional()
   num_hueco?: number;
+
+  @ApiPropertyOptional({
+    description:
+      'Observación de la ampliación asociada a la creación del hueco (opcional)',
+    example: 'Se amplía por solicitud del propietario',
+    required: false,
+    maxLength: 500,
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  observacion_ampliacion?: string;
 }
