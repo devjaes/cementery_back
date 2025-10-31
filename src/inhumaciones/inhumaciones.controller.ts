@@ -12,6 +12,7 @@ import {
   UploadedFiles,
 } from '@nestjs/common';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
+import { UpdatePaymentStatusDto } from './dto/update-payment-status.dto';
 import { InhumacionesService } from './inhumaciones.service';
 import { Inhumacion } from './entities/inhumacion.entity';
 import { UpdateInhumacionDto } from './dto/update-inhumacione.dto';
@@ -165,6 +166,30 @@ export class InhumacionesController {
     @Body() updateDto: UpdateInhumacionDto,
   ) {
     return this.service.update(id, updateDto);
+  }
+
+  @Patch(':id/payment-status')
+  // @UseGuards(JwtAuthGuard, RolesGuard) // habilitar para restringir solo a personal financiero
+  @ApiOperation({
+    summary: 'Actualizar estado de pago de una inhumación',
+    description: 'Marca la inhumación como "pending" (pendiente) o "paid" (pagada). Se usa cuando el cliente regresa de la ventanilla financiera con la factura.',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'ID de la inhumación',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+  })
+  @ApiBody({ type: UpdatePaymentStatusDto })
+  @ApiOkResponse({
+    description: 'Estado de pago actualizado exitosamente',
+    type: Inhumacion,
+  })
+  @ApiNotFoundResponse({ description: 'Inhumación no encontrada' })
+  async updatePaymentStatus(
+    @Param('id') id: string,
+    @Body() body: UpdatePaymentStatusDto,
+  ) {
+    return this.service.updatePaymentStatus(id, body.paymentStatus);
   }
 
   @Delete(':id')
