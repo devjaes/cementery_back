@@ -25,6 +25,9 @@ export class Bloque {
   @Column({ type: 'varchar', length: 100 })
   nombre: string;
 
+  @Column({ type: 'int' })
+  numero: number;
+
   @Column({ type: 'varchar', length: 500, nullable: true })
   descripcion: string;
 
