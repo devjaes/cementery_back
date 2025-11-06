@@ -8,6 +8,7 @@ import { CreateCementerioDto } from './dto/create-cementerio.dto';
 import { UpdateCementerioDto } from './dto/update-cementerio.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Cementerio } from './entities/cementerio.entity';
+import { Bloque } from 'src/bloques/entities/bloque.entity';
 import { Like, Repository } from 'typeorm';
 
 @Injectable()
@@ -15,6 +16,8 @@ export class CementerioService {
   constructor(
     @InjectRepository(Cementerio)
     private readonly cementerioRepository: Repository<Cementerio>,
+    @InjectRepository(Bloque)
+    private readonly bloqueRepository: Repository<Bloque>,
   ) {
     console.log('CementerioService initialized');
   }
@@ -29,15 +32,40 @@ export class CementerioService {
         where: { nombre: createCementerioDto.nombre },
       });
       if (existente) {
-        throw new InternalServerErrorException(
+        throw new BadRequestException(
           'Ya existe un cementerio con ese nombre',
         );
       }
+
+      // Separar los datos del cementerio de los bloques
+      const { bloques, ...cementerioData } = createCementerioDto;
+
       // Crea y guarda el cementerio
-      const cementerio = this.cementerioRepository.create(createCementerioDto);
+      const cementerio = this.cementerioRepository.create(cementerioData);
       const savedCementerio = await this.cementerioRepository.save(cementerio);
-      return { cementerio: savedCementerio };
+
+      // Si se proporcionaron bloques, crearlos
+      if (bloques && bloques.length > 0) {
+        const bloquesEntities = bloques.map(bloqueData => 
+          this.bloqueRepository.create({
+            ...bloqueData,
+            id_cementerio: savedCementerio,
+          })
+        );
+        await this.bloqueRepository.save(bloquesEntities);
+      }
+
+      // Obtener el cementerio con sus bloques para devolverlo
+      const cementerioConBloques = await this.cementerioRepository.findOne({
+        where: { id_cementerio: savedCementerio.id_cementerio },
+        relations: ['bloques'],
+      });
+
+      return { cementerio: cementerioConBloques };
     } catch (error) {
+      if (error instanceof BadRequestException) {
+        throw error;
+      }
       throw new InternalServerErrorException(
         'Error al crear el cementerio: ' + (error.message || error),
       );

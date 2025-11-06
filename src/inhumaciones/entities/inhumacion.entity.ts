@@ -51,8 +51,14 @@ export class Inhumacion {
   @Column()
   codigo_inhumacion: string;
 
-  @OneToOne(() => RequisitosInhumacion, (requisitos) => requisitos.inhumacion)
-  @IsOptional()
+  @Column({
+    type: 'enum',
+    enum: ['pending', 'paid'],
+    default: 'pending',
+  })
+  paymentStatus: 'pending' | 'paid';
+
+  @OneToOne(() => RequisitosInhumacion, (requisitos) => requisitos.inhumacion, { nullable: true })
   @JoinColumn({ name: 'id_requisitos_inhumacion' })
   id_requisitos_inhumacion: RequisitosInhumacion;
 
@@ -71,7 +77,7 @@ export class Inhumacion {
   }
 
   @BeforeInsert()
-  async estadoDefault() {
+  estadoDefault() {
     if (!this.estado) {
       this.estado = 'Pendiente';
     }

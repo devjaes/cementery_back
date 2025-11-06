@@ -1,5 +1,6 @@
 // src/nichos/entities/nicho.entity.ts
 import { Cementerio } from 'src/cementerio/entities/cementerio.entity';
+import { Bloque } from 'src/bloques/entities/bloque.entity';
 import {
   Entity,
   PrimaryGeneratedColumn,
@@ -16,6 +17,7 @@ import { Exumacion } from 'src/exumacion/entities/exumacion.entity';
 import { Inhumacion } from 'src/inhumaciones/entities/inhumacion.entity';
 import { PropietarioNicho } from 'src/propietarios-nichos/entities/propietarios-nicho.entity';
 import { HuecosNicho } from 'src/huecos-nichos/entities/huecos-nicho.entity';
+import { EstadoNicho } from '../enum/estadoNicho.enum';
 
 @Entity('nichos')
 export class Nicho {
@@ -27,6 +29,12 @@ export class Nicho {
   })
   @JoinColumn({ name: 'id_cementerio' })
   id_cementerio: Cementerio;
+
+  @ManyToOne(() => Bloque, (bloque) => bloque.nichos, {
+    nullable: true,
+  })
+  @JoinColumn({ name: 'id_bloque' })
+  id_bloque: Bloque;
 
   @Column({ length: 50 })
   sector: string;
@@ -42,6 +50,13 @@ export class Nicho {
 
   @Column({ length: 20 })
   estado: string;
+
+  @Column({
+    type: 'enum',
+    enum: EstadoNicho,
+    default: EstadoNicho.DISPONIBLE,
+  })
+  estadoVenta: EstadoNicho
 
   @Column({ type: 'int', name: 'num_huecos' })
   num_huecos: number;

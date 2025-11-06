@@ -25,6 +25,8 @@ import { RequisitosInhumacionModule } from './requisitos-inhumacion/requisitos-i
 import { SharedModule } from './shared/shared.module';
 import { PaymentModule } from './payment/payment.module';
 import { Payment } from './payment/entities/payment.entity';
+import { BloquesModule } from './bloques/bloques.module';
+import { Bloque } from './bloques/entities/bloque.entity';
 
 @Module({
   imports: [
@@ -40,6 +42,7 @@ import { Payment } from './payment/entities/payment.entity';
       entities: [
         User,
         Cementerio,
+        Bloque,
         Nicho,
         Exumacion,
         Inhumacion,
@@ -54,6 +57,7 @@ import { Payment } from './payment/entities/payment.entity';
     }),
     UserModule,
     CementerioModule,
+    BloquesModule,
     AuthModule,
     NichoModule,
     ExumacionModule,

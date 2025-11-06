@@ -12,6 +12,8 @@ import { Inhumacion } from './entities/inhumacion.entity';
 import { UpdateInhumacionDto } from './dto/update-inhumacione.dto';
 import { HuecosNicho } from 'src/huecos-nichos/entities/huecos-nicho.entity';
 import { Persona } from 'src/personas/entities/persona.entity';
+import * as fs from 'fs';
+import * as path from 'path';
 
 @Injectable()
 export class InhumacionesService {
@@ -317,6 +319,26 @@ export class InhumacionesService {
   }
 
   /**
+   * Actualiza el estado de pago de una inhumación (pending|paid)
+   */
+  async updatePaymentStatus(id: string, status: 'pending' | 'paid') {
+    try {
+      const inhumacion = await this.repo.findOne({ where: { id_inhumacion: id } });
+      if (!inhumacion) {
+        throw new NotFoundException(`Inhumación con ID ${id} no encontrada`);
+      }
+
+      inhumacion.paymentStatus = status;
+      return await this.repo.save(inhumacion);
+    } catch (error) {
+      if (error instanceof NotFoundException) throw error;
+      throw new InternalServerErrorException(
+        'Error al actualizar el estado de pago: ' + (error.message || error),
+      );
+    }
+  }
+
+  /**
    * Elimina una inhumación por su ID
    */
   async remove(id: string) {
@@ -524,4 +546,5 @@ export class InhumacionesService {
       .replace(/[\u0300-\u036f]/g, '')
       .trim();
   }
+
 }
