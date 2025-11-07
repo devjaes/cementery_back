@@ -150,93 +150,128 @@ export class NicheSalesService {
    * @param confirmarVentaDto Datos para confirmar la venta
    * @returns Información de la venta confirmada
    */
-  async confirmarVentaNicho(confirmarVentaDto: ConfirmarVentaNichoDto) {
-    try {
-      // 1. Obtener información del pago
-      const pago = await this.paymentService.findOne(confirmarVentaDto.idPago);
+async confirmarVentaNicho(confirmarVentaDto: ConfirmarVentaNichoDto) {
+  try {
+    // 1. Obtener información del pago
+    const pago = await this.paymentService.findOne(confirmarVentaDto.idPago);
 
-      if (pago.status === 'paid') {
-        throw new BadRequestException('Este pago ya ha sido confirmado');
-      }
+    if (pago.procedureType !== 'niche_sale') {
+      throw new BadRequestException('El pago no corresponde a una venta de nicho');
+    }
 
-      if (pago.procedureType !== 'niche_sale') {
-        throw new BadRequestException(
-          'El pago no corresponde a una venta de nicho',
-        );
-      }
+    // 2. Obtener el nicho asociado al pago
+    const nicho = await this.nichoRepository.findOne({
+      where: { id_nicho: pago.procedureId },
+      relations: ['id_cementerio'],
+    });
 
-      // 2. Obtener el nicho asociado al pago
-      const nicho = await this.nichoRepository.findOne({
-        where: { id_nicho: pago.procedureId },
-        relations: ['id_cementerio'],
-      });
+    if (!nicho) {
+      throw new NotFoundException(`Nicho con ID ${pago.procedureId} no encontrado`);
+    }
 
-      if (!nicho) {
-        throw new NotFoundException(
-          `Nicho con ID ${pago.procedureId} no encontrado`,
-        );
-      }
-
-      if (nicho.estadoVenta !== EstadoNicho.RESERVADO) {
-        throw new BadRequestException(
-          `El nicho debe estar en estado RESERVADO para confirmar la venta. Estado actual: ${nicho.estadoVenta}`,
-        );
-      }
-
-      // 3. Confirmar el pago
-      const pagoConfirmado = await this.paymentService.confirmPayment(
-        confirmarVentaDto.idPago,
-        confirmarVentaDto.validadoPor,
-        confirmarVentaDto.archivoRecibo,
-      );
-
-      // 4. Cambiar estado del nicho a VENDIDO
-      nicho.estadoVenta = EstadoNicho.VENDIDO;
-      const nichoVendido = await this.nichoRepository.save(nicho);
-
+    // Si el nicho ya está VENDIDO, devolvemos éxito idempotente con la info actual
+    if (nicho.estadoVenta === EstadoNicho.VENDIDO) {
+      const pagoInfo = await this.paymentService.findOne(confirmarVentaDto.idPago); // refrescar pago
       return {
         nicho: {
-          id: nichoVendido.id_nicho,
-          sector: nichoVendido.sector,
-          fila: nichoVendido.fila,
-          numero: nichoVendido.numero,
-          estado: nichoVendido.estadoVenta,
-          cementerio: nichoVendido.id_cementerio.nombre,
+          id: nicho.id_nicho,
+          sector: nicho.sector,
+          fila: nicho.fila,
+          numero: nicho.numero,
+          estado: nicho.estadoVenta,
+          cementerio: nicho.id_cementerio.nombre,
         },
         pago: {
-          id: pagoConfirmado.paymentId,
-          codigo: pagoConfirmado.paymentCode,
-          monto: pagoConfirmado.amount,
-          estado: pagoConfirmado.status,
-          fechaPago: pagoConfirmado.paidDate,
-          validadoPor: pagoConfirmado.validatedBy,
+          id: pagoInfo.paymentId,
+          codigo: pagoInfo.paymentCode,
+          monto: pagoInfo.amount,
+          estado: pagoInfo.status,
+          fechaPago: pagoInfo.paidDate,
+          validadoPor: pagoInfo.validatedBy,
           comprador: {
-            documento: pagoConfirmado.buyerDocument,
-            nombre: pagoConfirmado.buyerName,
-            direccion: pagoConfirmado.buyerDirection,
+            documento: pagoInfo.buyerDocument,
+            nombre: pagoInfo.buyerName,
+            direccion: pagoInfo.buyerDirection,
           },
         },
         siguientePaso: {
           accion: 'crear_propietario',
-          mensaje: 'Ahora debe registrar al propietario del nicho',
+          mensaje: 'El nicho ya está marcado como VENDIDO',
           datos: {
-            idNicho: nichoVendido.id_nicho,
-            idPago: pagoConfirmado.paymentId,
+            idNicho: nicho.id_nicho,
+            idPago: pagoInfo.paymentId,
           },
         },
       };
-    } catch (error) {
-      if (
-        error instanceof NotFoundException ||
-        error instanceof BadRequestException
-      ) {
-        throw error;
-      }
-      throw new InternalServerErrorException(
-        'Error interno al confirmar la venta del nicho',
+    }
+
+    // Si el nicho no está RESERVADO, rechazamos (permite sólo RESERVADO -> VENDIDO)
+    if (nicho.estadoVenta !== EstadoNicho.RESERVADO) {
+      throw new BadRequestException(
+        `El nicho debe estar en estado RESERVADO para confirmar la venta. Estado actual: ${nicho.estadoVenta}`,
       );
     }
+
+    // 3. Confirmar el pago si está pendiente, si ya es 'paid' lo reutilizamos
+    let pagoConfirmado;
+    if (pago.status === 'paid') {
+      // no volver a confirmar, usar el pago existente
+      pagoConfirmado = pago;
+    } else {
+      pagoConfirmado = await this.paymentService.confirmPayment(
+        confirmarVentaDto.idPago,
+        confirmarVentaDto.validadoPor,
+        confirmarVentaDto.archivoRecibo,
+      );
+    }
+
+    // 4. Cambiar estado del nicho a VENDIDO
+    nicho.estadoVenta = EstadoNicho.VENDIDO;
+    const nichoVendido = await this.nichoRepository.save(nicho);
+
+    return {
+      nicho: {
+        id: nichoVendido.id_nicho,
+        sector: nichoVendido.sector,
+        fila: nichoVendido.fila,
+        numero: nichoVendido.numero,
+        estado: nichoVendido.estadoVenta,
+        cementerio: nichoVendido.id_cementerio.nombre,
+      },
+      pago: {
+        id: pagoConfirmado.paymentId,
+        codigo: pagoConfirmado.paymentCode,
+        monto: pagoConfirmado.amount,
+        estado: pagoConfirmado.status,
+        fechaPago: pagoConfirmado.paidDate,
+        validadoPor: pagoConfirmado.validatedBy,
+        comprador: {
+          documento: pagoConfirmado.buyerDocument,
+          nombre: pagoConfirmado.buyerName,
+          direccion: pagoConfirmado.buyerDirection,
+        },
+      },
+      siguientePaso: {
+        accion: 'crear_propietario',
+        mensaje: 'Ahora debe registrar al propietario del nicho',
+        datos: {
+          idNicho: nichoVendido.id_nicho,
+          idPago: pagoConfirmado.paymentId,
+        },
+      },
+    };
+  } catch (error) {
+    if (
+      error instanceof NotFoundException ||
+      error instanceof BadRequestException
+    ) {
+      throw error;
+    }
+    throw new InternalServerErrorException(
+      'Error interno al confirmar la venta del nicho',
+    );
   }
+}
 
   /**
    * Registra al propietario del nicho después de confirmar la venta
