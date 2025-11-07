@@ -1,5 +1,5 @@
 import { IsOptional } from 'class-validator';
-import { Exumacion } from 'src/exumacion/entities/exumacion.entity';
+import { Exhumacion } from 'src/exhumacion/entities/exhumacion.entity';
 import { Nicho } from 'src/nicho/entities/nicho.entity';
 import { Persona } from 'src/personas/entities/persona.entity';
 import { RequisitosInhumacion } from 'src/requisitos-inhumacion/entities/requisitos-inhumacion.entity';
@@ -62,8 +62,8 @@ export class Inhumacion {
   @Column('date', { nullable: true })
   fecha_actualizacion: string;
 
-  @OneToMany(() => Exumacion, (exumacion) => exumacion.id_inhumacion)
-  exumaciones: Exumacion[];
+  @OneToMany(() => Exhumacion, (exhumacion: Exhumacion) => exhumacion.inhumacion)
+  exhumaciones: Exhumacion[];
 
   @BeforeInsert()
   async setFechaCreacion() {

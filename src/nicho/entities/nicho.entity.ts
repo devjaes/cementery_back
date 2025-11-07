@@ -13,7 +13,7 @@ import {
   JoinColumn,
   OneToMany,
 } from 'typeorm';
-import { Exumacion } from 'src/exumacion/entities/exumacion.entity';
+import { Exhumacion } from 'src/exhumacion/entities/exhumacion.entity';
 import { Inhumacion } from 'src/inhumaciones/entities/inhumacion.entity';
 import { PropietarioNicho } from 'src/propietarios-nichos/entities/propietarios-nicho.entity';
 import { HuecosNicho } from 'src/huecos-nichos/entities/huecos-nicho.entity';
@@ -76,8 +76,8 @@ export class Nicho {
   @UpdateDateColumn({ type: 'varchar', nullable: true })
   fecha_actualizacion: string;
 
-  @OneToMany(() => Exumacion, (exumacion) => exumacion.nichoOriginal)
-  exumaciones: Exumacion[];
+  @OneToMany(() => Exhumacion, (exhumacion: Exhumacion) => exhumacion.nichoOriginal)
+  exhumaciones: Exhumacion[];
 
   @OneToMany(() => Inhumacion, (inhumacion) => inhumacion.id_nicho)
   inhumaciones: Inhumacion[];
