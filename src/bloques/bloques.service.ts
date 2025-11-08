@@ -49,9 +49,23 @@ export class BloquesService {
         );
       }
 
+      // Obtener el siguiente número para este cementerio
+      const bloquesDelCementerio = await this.bloqueRepository.find({
+        where: { 
+          id_cementerio: { id_cementerio: createBloqueDto.id_cementerio },
+        },
+        order: { numero: 'DESC' },
+        take: 1,
+      });
+
+      const siguienteNumero = bloquesDelCementerio.length > 0 
+        ? bloquesDelCementerio[0].numero + 1 
+        : 1;
+
       // Crea y guarda el bloque
       const bloque = this.bloqueRepository.create({
         ...createBloqueDto,
+        numero: siguienteNumero,
         id_cementerio: cementerio,
       });
       const savedBloque = await this.bloqueRepository.save(bloque);
@@ -146,6 +160,7 @@ export class BloquesService {
       }
 
       let cementerio = bloque.id_cementerio;
+      let nuevoNumero = bloque.numero;
       
       // Si se está actualizando el cementerio, verificar que exista
       if (updateBloqueDto.id_cementerio) {
@@ -156,6 +171,19 @@ export class BloquesService {
           throw new NotFoundException('Cementerio no encontrado');
         }
         cementerio = nuevoCementerio;
+
+        // Si cambia de cementerio, obtener el siguiente número para el nuevo cementerio
+        const bloquesDelNuevoCementerio = await this.bloqueRepository.find({
+          where: { 
+            id_cementerio: { id_cementerio: updateBloqueDto.id_cementerio },
+          },
+          order: { numero: 'DESC' },
+          take: 1,
+        });
+
+        nuevoNumero = bloquesDelNuevoCementerio.length > 0 
+          ? bloquesDelNuevoCementerio[0].numero + 1 
+          : 1;
       }
 
       // Verifica si hay conflicto de nombres en el mismo cementerio (solo activos)
@@ -181,7 +209,7 @@ export class BloquesService {
         ...updateBloqueDto,
       };
       
-      // Si se cambió el cementerio, establecer la relación
+      // Si se cambió el cementerio, establecer la relación y el nuevo número
       if (updateBloqueDto.id_cementerio) {
         updateData.id_cementerio = cementerio;
         delete updateData.id_cementerio; // No incluir el string ID en la actualización
@@ -191,9 +219,10 @@ export class BloquesService {
       const { id_cementerio: _, ...fieldsToUpdate } = updateBloqueDto;
       await this.bloqueRepository.update(id, fieldsToUpdate);
       
-      // Si se cambió el cementerio, actualizarlo por separado
+      // Si se cambió el cementerio, actualizarlo por separado junto con el nuevo número
       if (updateBloqueDto.id_cementerio) {
         bloque.id_cementerio = cementerio;
+        bloque.numero = nuevoNumero;
         await this.bloqueRepository.save(bloque);
       }
 
