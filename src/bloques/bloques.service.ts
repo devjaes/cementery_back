@@ -55,12 +55,19 @@ export class BloquesService {
           id_cementerio: createBloqueDto.id_cementerio,
         },
         order: { numero: 'DESC' },
-        take: 1,
       });
 
-      const siguienteNumero = bloquesDelCementerio.length > 0 
-        ? bloquesDelCementerio[0].numero + 1 
-        : 1;
+      // Calcular el siguiente número: si hay bloques con número válido, usar max + 1, sino 1
+      let siguienteNumero = 1;
+      if (bloquesDelCementerio.length > 0) {
+        const numerosValidos = bloquesDelCementerio
+          .map(b => b.numero)
+          .filter(n => n != null && !isNaN(n));
+        
+        if (numerosValidos.length > 0) {
+          siguienteNumero = Math.max(...numerosValidos) + 1;
+        }
+      }
 
       // Crea y guarda el bloque — asignar campos explícitamente para evitar
       // que el DTO con la propiedad `id_cementerio` string quede dentro del objeto
