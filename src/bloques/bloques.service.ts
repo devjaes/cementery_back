@@ -194,6 +194,7 @@ export class BloquesService {
       }
 
       let cementerio = bloque.cementerio;
+      let nuevoNumero: number | undefined;
       
       // Si se está actualizando el cementerio, verificar que exista
       if (updateBloqueDto.id_cementerio) {
@@ -204,6 +205,19 @@ export class BloquesService {
           throw new NotFoundException('Cementerio no encontrado');
         }
         cementerio = nuevoCementerio;
+
+        // Si cambia de cementerio, obtener el siguiente número para el nuevo cementerio
+        const bloquesDelNuevoCementerio = await this.bloqueRepository.find({
+          where: { 
+            id_cementerio: updateBloqueDto.id_cementerio,
+          },
+          order: { numero: 'DESC' },
+          take: 1,
+        });
+
+        nuevoNumero = bloquesDelNuevoCementerio.length > 0 
+          ? bloquesDelNuevoCementerio[0].numero + 1 
+          : 1;
       }
 
       // Verifica si hay conflicto de nombres en el mismo cementerio (solo activos)
