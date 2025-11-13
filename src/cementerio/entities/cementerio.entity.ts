@@ -40,7 +40,7 @@ export class Cementerio {
   @OneToMany(() => Nicho, (nicho) => nicho.id_cementerio)
   nichos: Nicho[];
 
-  @OneToMany(() => Bloque, (bloque) => bloque.id_cementerio)
+  @OneToMany(() => Bloque, (bloque) => bloque.cementerio)
   bloques: Bloque[];
 
   @OneToMany(() => RequisitosInhumacion, (requisito) => requisito.id_cementerio)
