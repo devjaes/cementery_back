@@ -47,7 +47,7 @@ export class CementerioService {
       // Si se proporcionaron bloques, crearlos
       if (bloques && bloques.length > 0) {
         for (const bloqueData of bloques) {
-          try {
+          try { 
             // Verificar si ya existe un bloque con ese nombre en el cementerio
             const existenteBloque = await this.bloqueRepository.findOne({
               where: { 
