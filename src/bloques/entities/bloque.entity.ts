@@ -12,8 +12,10 @@ export class Bloque {
 
   @Column({ type: 'varchar', length: 255, nullable: true })
   descripcion?: string;
-  @Column({ type: 'int' })
+
+  @Column({ type: 'int', nullable: true })
   numero: number;
+
   @Column({ type: 'int' })
   numero_filas: number;
 
