@@ -49,11 +49,25 @@ export class BloquesService {
         );
       }
 
+      // Obtener el siguiente número disponible para el cementerio
+      const bloquesDelCementerio = await this.bloqueRepository.find({
+        where: { 
+          id_cementerio: createBloqueDto.id_cementerio,
+        },
+        order: { numero: 'DESC' },
+        take: 1,
+      });
+
+      const siguienteNumero = bloquesDelCementerio.length > 0 
+        ? bloquesDelCementerio[0].numero + 1 
+        : 1;
+
       // Crea y guarda el bloque — asignar campos explícitamente para evitar
       // que el DTO con la propiedad `id_cementerio` string quede dentro del objeto
       const bloque = this.bloqueRepository.create();
       bloque.nombre = createBloqueDto.nombre;
       bloque.descripcion = createBloqueDto.descripcion ?? undefined;
+      bloque.numero = siguienteNumero; // Asignar número automáticamente
       bloque.numero_filas = createBloqueDto.numero_filas;
       bloque.numero_columnas = createBloqueDto.numero_columnas;
       // asignar la entidad Cementerio como relación
@@ -194,7 +208,6 @@ export class BloquesService {
       }
 
       let cementerio = bloque.cementerio;
-      let nuevoNumero: number | undefined;
       
       // Si se está actualizando el cementerio, verificar que exista
       if (updateBloqueDto.id_cementerio) {
@@ -205,19 +218,6 @@ export class BloquesService {
           throw new NotFoundException('Cementerio no encontrado');
         }
         cementerio = nuevoCementerio;
-
-        // Si cambia de cementerio, obtener el siguiente número para el nuevo cementerio
-        const bloquesDelNuevoCementerio = await this.bloqueRepository.find({
-          where: { 
-            id_cementerio: updateBloqueDto.id_cementerio,
-          },
-          order: { numero: 'DESC' },
-          take: 1,
-        });
-
-        nuevoNumero = bloquesDelNuevoCementerio.length > 0 
-          ? bloquesDelNuevoCementerio[0].numero + 1 
-          : 1;
       }
 
       // Verifica si hay conflicto de nombres en el mismo cementerio (solo activos)
