@@ -1,9 +1,9 @@
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { Nicho } from './nicho/entities/nicho.entity';
-import { Exumacion } from './exumacion/entities/exumacion.entity';
+import { Exhumacion } from './exhumacion/entities/exhumacion.entity';
 import { NichoModule } from './nicho/nicho.module';
-import { ExumacionModule } from './exumacion/exumacion.module';
+import { ExhumacionModule } from './exhumacion/exhumacion.module';
 import { Inhumacion } from './inhumaciones/entities/inhumacion.entity';
 import { InhumacionesModule } from './inhumaciones/inhumaciones.module';
 import { PersonasModule } from './personas/personas.module';
@@ -44,7 +44,7 @@ import { Bloque } from './bloques/entities/bloque.entity';
         Cementerio,
         Bloque,
         Nicho,
-        Exumacion,
+        Exhumacion,
         Inhumacion,
         Persona,
         PropietarioNicho,
@@ -60,7 +60,7 @@ import { Bloque } from './bloques/entities/bloque.entity';
     BloquesModule,
     AuthModule,
     NichoModule,
-    ExumacionModule,
+    ExhumacionModule,
     InhumacionesModule,
     PersonasModule,
     PropietariosNichosModule,
