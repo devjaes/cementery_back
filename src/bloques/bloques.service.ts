@@ -332,4 +332,58 @@ export class BloquesService {
       );
     }
   }
+
+  /**
+   * Obtiene todos los nichos de un bloque específico
+   */
+  async findNichosByBloque(id_bloque: string) {
+    try {
+      const bloque = await this.bloqueRepository.findOne({
+        where: { 
+          id_bloque: id_bloque,
+          estado: Not('Inactivo'),
+        },
+        relations: [
+          'cementerio',
+          'nichos',
+          'nichos.huecos',
+          'nichos.propietarios_nicho',
+          'nichos.inhumaciones',
+        ],
+      });
+      
+      if (!bloque) {
+        throw new NotFoundException('Bloque no encontrado o inactivo');
+      }
+
+      // Filtrar solo nichos activos
+      const nichosActivos = bloque.nichos.filter(n => n.estado === 'Activo');
+
+      return {
+        bloque: {
+          id_bloque: bloque.id_bloque,
+          nombre: bloque.nombre,
+          numero: bloque.numero,
+          numero_filas: bloque.numero_filas,
+          numero_columnas: bloque.numero_columnas,
+          descripcion: bloque.descripcion,
+          cementerio: bloque.cementerio,
+        },
+        nichos: nichosActivos.map(nicho => ({
+          ...nicho,
+          estadoVenta: (nicho as any).estadoVenta,
+        })),
+        total_nichos: nichosActivos.length,
+        capacidad_total: bloque.numero_filas * bloque.numero_columnas,
+        espacios_disponibles: (bloque.numero_filas * bloque.numero_columnas) - nichosActivos.length,
+      };
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+      throw new InternalServerErrorException(
+        'Error al obtener los nichos del bloque: ' + (error.message || error),
+      );
+    }
+  }
 }
