@@ -39,7 +39,7 @@ export class BloquesService {
       const existente = await this.bloqueRepository.findOne({
         where: { 
           nombre: createBloqueDto.nombre,
-          id_cementerio: { id_cementerio: createBloqueDto.id_cementerio },
+          id_cementerio: createBloqueDto.id_cementerio,
           estado: Not('Inactivo'), // Solo verificar contra bloques activos
         },
       });
@@ -49,20 +49,89 @@ export class BloquesService {
         );
       }
 
-      // Crea y guarda el bloque
-      const bloque = this.bloqueRepository.create({
-        ...createBloqueDto,
-        id_cementerio: cementerio,
+      // Obtener el siguiente número disponible para el cementerio
+      const bloquesDelCementerio = await this.bloqueRepository.find({
+        where: { 
+          id_cementerio: createBloqueDto.id_cementerio,
+        },
+        order: { numero: 'DESC' },
       });
+
+      // Calcular el siguiente número: si hay bloques con número válido, usar max + 1, sino 1
+      let siguienteNumero = 1;
+      if (bloquesDelCementerio.length > 0) {
+        const numerosValidos = bloquesDelCementerio
+          .map(b => b.numero)
+          .filter(n => n != null && !isNaN(n));
+        
+        if (numerosValidos.length > 0) {
+          siguienteNumero = Math.max(...numerosValidos) + 1;
+        }
+      }
+
+      // Crea y guarda el bloque — asignar campos explícitamente para evitar
+      // que el DTO con la propiedad `id_cementerio` string quede dentro del objeto
+      const bloque = this.bloqueRepository.create();
+      bloque.nombre = createBloqueDto.nombre;
+      bloque.descripcion = createBloqueDto.descripcion ?? undefined;
+      bloque.numero = siguienteNumero; // Asignar número automáticamente
+      bloque.numero_filas = createBloqueDto.numero_filas;
+      bloque.numero_columnas = createBloqueDto.numero_columnas;
+      // asignar la entidad Cementerio como relación
+      bloque.cementerio = cementerio as any;
+      try {
+        // also set the raw id to ensure correct FK value (some TypeORM versions
+        // correctly accept string here)
+        (bloque as any).id_cementerio = cementerio.id_cementerio;
+      } catch (e) {
+        // ignore
+      }
+
+      // Logging temporal para depuración: mostrar qué se va a guardar
+      try {
+        console.log('DEBUG: bloque entity before save:', JSON.stringify({
+          nombre: bloque.nombre,
+          descripcion: bloque.descripcion,
+          numero_filas: bloque.numero_filas,
+          numero_columnas: bloque.numero_columnas,
+          id_cementerio: (bloque.cementerio as any)?.id_cementerio || (bloque as any).id_cementerio,
+        }));
+      } catch (e) {
+        console.log('DEBUG: could not stringify bloque', e);
+      }
+      // Más logging: tipo y valor crudo de la propiedad de relación
+      try {
+        console.log('DEBUG: typeof bloque.id_cementerio ->', typeof (bloque as any).id_cementerio);
+        console.log('DEBUG: raw bloque.id_cementerio ->', (bloque as any).id_cementerio);
+      } catch (e) {
+        console.log('DEBUG: could not inspect id_cementerio', e);
+      }
+
       const savedBloque = await this.bloqueRepository.save(bloque);
       return { bloque: savedBloque };
     } catch (error) {
       if (error instanceof NotFoundException || error instanceof BadRequestException) {
         throw error;
       }
-      throw new InternalServerErrorException(
-        'Error al crear el bloque: ' + (error.message || error),
-      );
+      // Preparar debug para devolver en la respuesta y facilitar la depuración
+      const debugInfo: any = {};
+      try {
+        debugInfo.typeof_id_cementerio = typeof ( ( (this as any).bloque )?.id_cementerio || ( ({} as any) ).id_cementerio );
+      } catch (e) {
+        debugInfo.typeof_id_cementerio = 'unknown';
+      }
+      try {
+        debugInfo.raw_id_cementerio = ( ( (this as any).bloque )?.id_cementerio ) || ( ({} as any) ).id_cementerio;
+      } catch (e) {
+        debugInfo.raw_id_cementerio = null;
+      }
+      // Incluir el body recibido para inspección
+      debugInfo.incomingBody = (this as any).incomingBody || null;
+
+      throw new InternalServerErrorException({
+        message: 'Error al crear el bloque: ' + (error.message || error),
+        debug: debugInfo,
+      });
     }
   }
 
@@ -73,7 +142,7 @@ export class BloquesService {
     try {
       const bloques = await this.bloqueRepository.find({
         where: { estado: Not('Inactivo') }, // Solo bloques activos
-        relations: ['id_cementerio'],
+        relations: ['cementerio'],
       });
       return { bloques };
     } catch (error) {
@@ -90,10 +159,10 @@ export class BloquesService {
     try {
       const bloques = await this.bloqueRepository.find({
         where: { 
-          id_cementerio: { id_cementerio },
+          id_cementerio: id_cementerio,
           estado: Not('Inactivo'), // Solo bloques activos
         },
-        relations: ['id_cementerio'],
+        relations: ['cementerio'],
       });
       return { bloques };
     } catch (error) {
@@ -113,7 +182,7 @@ export class BloquesService {
           id_bloque: id,
           estado: Not('Inactivo'), // Solo bloques activos
         },
-        relations: ['id_cementerio', 'nichos'],
+        relations: ['cementerio', 'nichos'],
       });
       if (!bloque) {
         throw new NotFoundException('Bloque no encontrado o inactivo');
@@ -139,13 +208,13 @@ export class BloquesService {
           id_bloque: id,
           estado: Not('Inactivo'), // Solo actualizar bloques activos
         },
-        relations: ['id_cementerio'],
+        relations: ['cementerio'],
       });
       if (!bloque) {
         throw new NotFoundException('Bloque no encontrado o inactivo');
       }
 
-      let cementerio = bloque.id_cementerio;
+      let cementerio = bloque.cementerio;
       
       // Si se está actualizando el cementerio, verificar que exista
       if (updateBloqueDto.id_cementerio) {
@@ -163,9 +232,7 @@ export class BloquesService {
         const existente = await this.bloqueRepository.findOne({
           where: { 
             nombre: updateBloqueDto.nombre,
-            id_cementerio: { 
-              id_cementerio: cementerio.id_cementerio 
-            },
+            id_cementerio: cementerio.id_cementerio,
             estado: Not('Inactivo'), // Solo verificar contra bloques activos
           },
         });
@@ -176,30 +243,24 @@ export class BloquesService {
         }
       }
 
-      // Preparar datos de actualización
-      const updateData: any = {
-        ...updateBloqueDto,
-      };
-      
-      // Si se cambió el cementerio, establecer la relación
-      if (updateBloqueDto.id_cementerio) {
-        updateData.id_cementerio = cementerio;
-        delete updateData.id_cementerio; // No incluir el string ID en la actualización
+      // Actualizar solo los campos simples (no relaciones)
+      const { id_cementerio: idCem, ...fieldsToUpdate } = updateBloqueDto as any;
+      if (Object.keys(fieldsToUpdate).length > 0) {
+        await this.bloqueRepository.update(id, fieldsToUpdate);
       }
 
-      // Actualizar solo los campos que no sean relaciones
-      const { id_cementerio: _, ...fieldsToUpdate } = updateBloqueDto;
-      await this.bloqueRepository.update(id, fieldsToUpdate);
-      
-      // Si se cambió el cementerio, actualizarlo por separado
+      // Si se cambió el cementerio, asignarlo y guardar la entidad completa
       if (updateBloqueDto.id_cementerio) {
-        bloque.id_cementerio = cementerio;
+        bloque.cementerio = cementerio as any;
+        try {
+          (bloque as any).id_cementerio = cementerio.id_cementerio;
+        } catch (e) {}
         await this.bloqueRepository.save(bloque);
       }
 
       const updatedBloque = await this.bloqueRepository.findOne({
         where: { id_bloque: id },
-        relations: ['id_cementerio'],
+        relations: ['cementerio'],
       });
       return { bloque: updatedBloque };
     } catch (error) {
@@ -229,8 +290,9 @@ export class BloquesService {
       }
 
       // Verificar si el bloque tiene nichos asociados
-      if (bloque.nichos && bloque.nichos.length > 0) {
-        const nichosActivos = bloque.nichos.filter(n => n.estado !== 'Inactivo');
+      const nichosArray = Array.isArray(bloque.nichos) ? bloque.nichos : [];
+      if (nichosArray.length > 0) {
+        const nichosActivos = nichosArray.filter(n => n.estado !== 'Inactivo');
         if (nichosActivos.length > 0) {
           throw new BadRequestException(
             `No se puede eliminar el bloque porque tiene ${nichosActivos.length} nicho(s) activo(s) asociado(s)`,
@@ -261,7 +323,7 @@ export class BloquesService {
           nombre: Like(`%${nombre}%`),
           estado: Not('Inactivo'), // Solo buscar bloques activos
         },
-        relations: ['id_cementerio'],
+        relations: ['cementerio'],
       });
       return { bloques };
     } catch (error) {
