@@ -46,13 +46,36 @@ export class CementerioService {
 
       // Si se proporcionaron bloques, crearlos
       if (bloques && bloques.length > 0) {
-        const bloquesEntities = bloques.map(bloqueData => 
-          this.bloqueRepository.create({
-            ...bloqueData,
-            id_cementerio: savedCementerio,
-          })
-        );
-        await this.bloqueRepository.save(bloquesEntities);
+        for (const bloqueData of bloques) {
+          try { 
+            // Verificar si ya existe un bloque con ese nombre en el cementerio
+            const existenteBloque = await this.bloqueRepository.findOne({
+              where: { 
+                nombre: bloqueData.nombre,
+                id_cementerio: savedCementerio.id_cementerio,
+              },
+            });
+            if (existenteBloque) {
+              console.warn(`Bloque "${bloqueData.nombre}" ya existe, omitiendo...`);
+              continue;
+            }
+
+            // Crear el bloque asignando explícitamente todos los campos
+            const nuevoBloque = new Bloque();
+            nuevoBloque.nombre = bloqueData.nombre;
+            nuevoBloque.descripcion = bloqueData.descripcion;
+            nuevoBloque.numero_filas = bloqueData.numero_filas;
+            nuevoBloque.numero_columnas = bloqueData.numero_columnas;
+            nuevoBloque.id_cementerio = savedCementerio.id_cementerio;
+            nuevoBloque.estado = 'Activo';
+            nuevoBloque.fecha_creacion = new Date().toISOString();
+            
+            await this.bloqueRepository.save(nuevoBloque);
+          } catch (bloqueError) {
+            console.error(`Error al crear bloque "${bloqueData.nombre}":`, bloqueError);
+            throw bloqueError;
+          }
+        }
       }
 
       // Obtener el cementerio con sus bloques para devolverlo
@@ -61,7 +84,11 @@ export class CementerioService {
         relations: ['bloques'],
       });
 
-      return { cementerio: cementerioConBloques };
+      return { 
+        success: true,
+        message: 'Cementerio creado exitosamente',
+        data: cementerioConBloques 
+      };
     } catch (error) {
       if (error instanceof BadRequestException) {
         throw error;
