@@ -47,6 +47,28 @@ Obtener todos los bloques
 ### GET /bloques/cementerio/:id_cementerio
 Obtener bloques de un cementerio específico
 
+### GET /bloques/:id/nichos
+Obtener todos los nichos de un bloque específico
+
+**Respuesta:**
+```json
+{
+  "bloque": {
+    "id_bloque": "uuid",
+    "nombre": "Bloque A",
+    "numero": 1,
+    "numero_filas": 10,
+    "numero_columnas": 5,
+    "descripcion": "Descripción",
+    "cementerio": { ... }
+  },
+  "nichos": [ ... ],
+  "total_nichos": 25,
+  "capacidad_total": 50,
+  "espacios_disponibles": 25
+}
+```
+
 ### GET /bloques/search?nombre=nombreBloque
 Buscar bloques por nombre
 
