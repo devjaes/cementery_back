@@ -1,11 +1,18 @@
 import { NestFactory } from '@nestjs/core';
+import { NestExpressApplication } from '@nestjs/platform-express';
+import * as path from 'path';
 import { AppModule } from './app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { ResponseInterceptor } from './common/interceptors/response.interceptor/response.interceptor';
 import 'dotenv/config';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
+  // Serve uploads folder as static so files saved in /uploads are accessible via HTTP
+  const uploadsPath = path.join(process.cwd(), 'uploads');
+  app.useStaticAssets(uploadsPath, {
+    prefix: '/uploads/',
+  });
   app.useGlobalInterceptors(new ResponseInterceptor());
   app.enableCors({
     origin: '*', // Permite todas las peticiones (puedes cambiarlo a un dominio específico)

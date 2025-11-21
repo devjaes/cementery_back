@@ -13,7 +13,8 @@ import {
   JoinColumn,
   OneToMany,
 } from 'typeorm';
-import { Exhumacion } from 'src/exhumacion/entities/exhumacion.entity';
+import { Exumacion } from 'src/exumacion/entities/exumacion.entity';
+import { Mejora } from 'src/mejoras/entities/mejora.entity';
 import { Inhumacion } from 'src/inhumaciones/entities/inhumacion.entity';
 import { PropietarioNicho } from 'src/propietarios-nichos/entities/propietarios-nicho.entity';
 import { HuecosNicho } from 'src/huecos-nichos/entities/huecos-nicho.entity';
@@ -78,6 +79,9 @@ export class Nicho {
 
   @OneToMany(() => Exhumacion, (exhumacion: Exhumacion) => exhumacion.nichoOriginal)
   exhumaciones: Exhumacion[];
+
+  @OneToMany(() => Mejora, (mejora) => mejora.nicho)
+  mejoras: Mejora[];
 
   @OneToMany(() => Inhumacion, (inhumacion) => inhumacion.id_nicho)
   inhumaciones: Inhumacion[];

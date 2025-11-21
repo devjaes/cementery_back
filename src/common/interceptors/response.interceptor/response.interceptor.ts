@@ -5,6 +5,7 @@ import {
   NestInterceptor,
   HttpException,
   HttpStatus,
+  StreamableFile,
 } from '@nestjs/common';
 import { Observable, catchError, map, throwError } from 'rxjs';
 import { ResponseDto } from 'src/common/dto/response.dto/response.dto';
@@ -18,7 +19,13 @@ export class ResponseInterceptor<T>
     next: CallHandler<T>,
   ): Observable<ResponseDto<T>> {
     return next.handle().pipe(
-      map((data: T) => new ResponseDto<T>(true, 'Operación exitosa', data)),
+      map((data: T) => {
+        if (data instanceof StreamableFile || data instanceof Buffer) {
+          return data as unknown as ResponseDto<T>;
+        }
+
+        return new ResponseDto<T>(true, 'Operación exitosa', data);
+      }),
       catchError((error: unknown) => {
         const message = this.getErrorMessage(error);
         const status = this.getErrorStatus(error);
