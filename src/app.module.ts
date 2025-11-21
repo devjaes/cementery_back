@@ -1,7 +1,7 @@
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { Nicho } from './nicho/entities/nicho.entity';
-import { Exumacion } from './exumacion/entities/exumacion.entity';
+import { Exhumacion } from './exhumacion/entities/exhumacion.entity';
 import { Mejora } from './mejoras/entities/mejora.entity';
 import { NichoModule } from './nicho/nicho.module';
 import { ExhumacionModule } from './exhumacion/exhumacion.module';
@@ -48,7 +48,7 @@ import { Bloque } from './bloques/entities/bloque.entity';
         Nicho,
         Exhumacion,
         Inhumacion,
-  Mejora,
+        Mejora,
         Persona,
         PropietarioNicho,
         RequisitosInhumacion,
