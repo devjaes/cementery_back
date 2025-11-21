@@ -77,8 +77,8 @@ export class Nicho {
   @UpdateDateColumn({ type: 'varchar', nullable: true })
   fecha_actualizacion: string;
 
-  @OneToMany(() => Exumacion, (exumacion) => exumacion.nichoOriginal)
-  exumaciones: Exumacion[];
+  @OneToMany(() => Exhumacion, (exhumacion: Exhumacion) => exhumacion.nichoOriginal)
+  exhumaciones: Exhumacion[];
 
   @OneToMany(() => Mejora, (mejora) => mejora.nicho)
   mejoras: Mejora[];
@@ -94,6 +94,8 @@ export class Nicho {
 
   @OneToMany(() => HuecosNicho, (hueco) => hueco.id_nicho)
   huecos: HuecosNicho[];
+  static estadoVenta: any;
+  static observaciones: any;
 
   @BeforeInsert()
   async setFechaCreacion() {
