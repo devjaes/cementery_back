@@ -5,7 +5,7 @@ import { HuecosNicho } from '../../huecos-nichos/entities/huecos-nicho.entity';
 import { PropietarioNicho } from '../../propietarios-nichos/entities/propietarios-nicho.entity';
 import { Persona } from '../../personas/entities/persona.entity';
 import { Inhumacion } from '../../inhumaciones/entities/inhumacion.entity';
-import { Exumacion } from '../../exumacion/entities/exumacion.entity';
+import { Exhumacion } from '../../exhumacion/entities/exhumacion.entity';
 import { User } from '../../user/entities/user.entity';
 import { RequisitosInhumacion } from '../../requisitos-inhumacion/entities/requisitos-inhumacion.entity';
 import { runCementerioSeed } from './cementerio-seed';
@@ -25,7 +25,7 @@ class SeedRunner {
         User,
         Cementerio,
         Nicho,
-        Exumacion,
+        Exhumacion,
         Inhumacion,
         Persona,
         PropietarioNicho,

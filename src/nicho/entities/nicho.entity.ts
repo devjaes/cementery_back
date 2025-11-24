@@ -13,7 +13,8 @@ import {
   JoinColumn,
   OneToMany,
 } from 'typeorm';
-import { Exumacion } from 'src/exumacion/entities/exumacion.entity';
+import { Exhumacion } from 'src/exhumacion/entities/exhumacion.entity';
+import { Mejora } from 'src/mejoras/entities/mejora.entity';
 import { Inhumacion } from 'src/inhumaciones/entities/inhumacion.entity';
 import { PropietarioNicho } from 'src/propietarios-nichos/entities/propietarios-nicho.entity';
 import { HuecosNicho } from 'src/huecos-nichos/entities/huecos-nicho.entity';
@@ -56,7 +57,7 @@ export class Nicho {
     enum: EstadoNicho,
     default: EstadoNicho.DISPONIBLE,
   })
-  estadoVenta: EstadoNicho
+  estadoVenta: EstadoNicho;
 
   @Column({ type: 'int', name: 'num_huecos' })
   num_huecos: number;
@@ -76,8 +77,14 @@ export class Nicho {
   @UpdateDateColumn({ type: 'varchar', nullable: true })
   fecha_actualizacion: string;
 
-  @OneToMany(() => Exumacion, (exumacion) => exumacion.nichoOriginal)
-  exumaciones: Exumacion[];
+  @OneToMany(
+    () => Exhumacion,
+    (exhumacion: Exhumacion) => exhumacion.nichoOriginal,
+  )
+  exhumaciones: Exhumacion[];
+
+  @OneToMany(() => Mejora, (mejora) => mejora.nicho)
+  mejoras: Mejora[];
 
   @OneToMany(() => Inhumacion, (inhumacion) => inhumacion.id_nicho)
   inhumaciones: Inhumacion[];
@@ -90,6 +97,8 @@ export class Nicho {
 
   @OneToMany(() => HuecosNicho, (hueco) => hueco.id_nicho)
   huecos: HuecosNicho[];
+  static estadoVenta: any;
+  static observaciones: any;
 
   @BeforeInsert()
   async setFechaCreacion() {
