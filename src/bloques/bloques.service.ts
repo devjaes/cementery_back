@@ -9,7 +9,9 @@ import { UpdateBloqueDto } from './dto/update-bloque.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Bloque } from './entities/bloque.entity';
 import { Cementerio } from 'src/cementerio/entities/cementerio.entity';
+import { Nicho } from 'src/nicho/entities/nicho.entity';
 import { Like, Repository, Not } from 'typeorm';
+import { EstadoNicho } from 'src/nicho/enum/estadoNicho.enum';
 
 @Injectable()
 export class BloquesService {
@@ -18,6 +20,8 @@ export class BloquesService {
     private readonly bloqueRepository: Repository<Bloque>,
     @InjectRepository(Cementerio)
     private readonly cementerioRepository: Repository<Cementerio>,
+    @InjectRepository(Nicho)
+    private readonly nichoRepository: Repository<Nicho>,
   ) {
     console.log('BloquesService initialized');
   }
@@ -108,7 +112,32 @@ export class BloquesService {
       }
 
       const savedBloque = await this.bloqueRepository.save(bloque);
-      return { bloque: savedBloque };
+
+      // Crear nichos automáticamente según filas y columnas
+      // Los nichos se crean SIN tipo ni num_huecos (se asignan al habilitar)
+      const nichos: Nicho[] = [];
+      for (let fila = 1; fila <= savedBloque.numero_filas; fila++) {
+        for (let columna = 1; columna <= savedBloque.numero_columnas; columna++) {
+          const nicho = this.nichoRepository.create({
+            id_bloque: savedBloque as any,
+            id_cementerio: cementerio as any,
+            fila: fila,
+            columna: columna,
+            estado: 'Activo',
+            estadoVenta: EstadoNicho.DESHABILITADO,
+            // tipo y num_huecos se asignan al habilitar el nicho
+          });
+          nichos.push(nicho);
+        }
+      }
+
+      const nichosCreados = await this.nichoRepository.save(nichos);
+
+      return { 
+        bloque: savedBloque,
+        nichos_creados: nichosCreados.length,
+        mensaje: `Bloque creado con ${nichosCreados.length} nichos deshabilitados`
+      };
     } catch (error) {
       if (error instanceof NotFoundException || error instanceof BadRequestException) {
         throw error;

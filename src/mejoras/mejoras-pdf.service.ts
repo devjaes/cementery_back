@@ -196,7 +196,7 @@ export class MejorasPdfService {
                     {
                       width: '34%',
                       stack: [
-                        { text: `Sector / Fila / Número: ${this.upper(`${nicho?.sector ?? ''} ${nicho?.fila ?? ''} ${nicho?.numero ?? ''}`)}` },
+                        { text: `Fila / Columna: ${this.upper(`${nicho?.fila ?? ''} / ${nicho?.columna ?? ''}`)}` },
                         { text: `Código sitio: ${nicho?.id_nicho ?? ''}` },
                         { text: `Observación: ${this.upper(mejora.observacionServicio)}` },
                       ],

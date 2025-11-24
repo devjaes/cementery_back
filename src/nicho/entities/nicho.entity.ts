@@ -37,16 +37,13 @@ export class Nicho {
   @JoinColumn({ name: 'id_bloque' })
   id_bloque: Bloque;
 
-  @Column({ length: 50 })
-  sector: string;
+  @Column({ type: 'int', nullable: true })
+  fila: number;
 
-  @Column({ length: 10 })
-  fila: string;
+  @Column({ type: 'int', nullable: true })
+  columna: number;
 
-  @Column({ length: 10 })
-  numero: string;
-
-  @Column({ length: 20 })
+  @Column({ length: 20, nullable: true })
   tipo: string;
 
   @Column({ length: 20 })
@@ -55,14 +52,14 @@ export class Nicho {
   @Column({
     type: 'enum',
     enum: EstadoNicho,
-    default: EstadoNicho.DISPONIBLE,
+    default: EstadoNicho.DESHABILITADO,
   })
   estadoVenta: EstadoNicho;
 
-  @Column({ type: 'int', name: 'num_huecos' })
+  @Column({ type: 'int', name: 'num_huecos', nullable: true })
   num_huecos: number;
 
-  @Column({ type: 'varchar', name: 'fecha_construccion' })
+  @Column({ type: 'varchar', name: 'fecha_construccion', nullable:true })
   fecha_construccion: string;
 
   // @Column({ type: 'date', nullable: true })

@@ -9,6 +9,7 @@ import { Repository, Not } from 'typeorm';
 import { Nicho } from './entities/nicho.entity';
 import { CreateNichoDto } from './dto/create-nicho.dto';
 import { UpdateNichoDto } from './dto/update-nicho.dto';
+import { HabilitarNichoDto } from './dto/habilitar-nicho.dto';
 import { HuecosNicho } from 'src/huecos-nichos/entities/huecos-nicho.entity';
 import { Persona } from 'src/personas/entities/persona.entity';
 import { PropietarioNicho } from 'src/propietarios-nichos/entities/propietarios-nicho.entity';
@@ -32,7 +33,8 @@ export class NichoService {
 
   /**
    * Crea un nuevo nicho y sus huecos asociados
-   * Asigna automáticamente el bloque con disponibilidad según el orden de numeración
+   * NOTA: Este método ya no se usa normalmente. Los nichos se crean automáticamente
+   * al crear un bloque. Este método se mantiene para casos especiales.
    */
   async create(createNichoDto: CreateNichoDto) {
     try {
@@ -58,29 +60,13 @@ export class NichoService {
       const nicho = this.nichoRepository.create({
         ...createNichoDto,
         id_bloque: bloqueDisponible as any,
+        estadoVenta: EstadoNicho.DESHABILITADO,
       });
       
       const nichoGuardado = await this.nichoRepository.save(nicho);
-
-      // Crear los huecos asociados al nicho
-      const huecos: HuecosNicho[] = [];
-      for (let i = 1; i <= nichoGuardado.num_huecos; i++) {
-        const hueco = this.huecosNichoRepository.create({
-          num_hueco: i,
-          estado: 'Disponible',
-          id_nicho: nichoGuardado,
-        });
-        huecos.push(hueco);
-      }
-      const huecosGuardados = await this.huecosNichoRepository.save(huecos);
-      
-      // Aseguramos que estadoVenta esté presente en la respuesta
-      const estadoVenta = (nichoGuardado as any).estadoVenta ?? EstadoNicho.DISPONIBLE;
       
       return {
-        ...nichoGuardado,
-        estadoVenta,
-        huecos: huecosGuardados,
+        nicho: nichoGuardado,
         bloque: {
           id_bloque: bloqueDisponible.id_bloque,
           nombre: bloqueDisponible.nombre,
@@ -169,6 +155,84 @@ export class NichoService {
     } catch (error) {
       throw new InternalServerErrorException(
         'Error al obtener los nichos: ' + (error.message || error),
+      );
+    }
+  }
+
+  /**
+   * Habilita un nicho deshabilitado, asignándole tipo y número de huecos
+   */
+  async habilitarNicho(id_nicho: string, habilitarDto: HabilitarNichoDto) {
+    try {
+      // Buscar el nicho
+      const nicho = await this.nichoRepository.findOne({
+        where: { id_nicho: id_nicho },
+        relations: ['id_bloque', 'id_cementerio'],
+      });
+
+      if (!nicho) {
+        throw new NotFoundException(`Nicho con ID ${id_nicho} no encontrado`);
+      }
+
+      // Verificar que el nicho esté deshabilitado
+      if (nicho.estadoVenta !== EstadoNicho.DESHABILITADO) {
+        throw new BadRequestException(
+          `El nicho ya está habilitado. Estado actual: ${nicho.estadoVenta}`
+        );
+      }
+
+      // Actualizar el nicho con los datos proporcionados
+      nicho.tipo = habilitarDto.tipo;
+      nicho.num_huecos = habilitarDto.num_huecos;
+      nicho.fecha_construccion = habilitarDto.fecha_construccion || new Date().toISOString();
+      nicho.observaciones = habilitarDto.observaciones;
+      nicho.estadoVenta = EstadoNicho.DISPONIBLE;
+
+      const nichoActualizado = await this.nichoRepository.save(nicho);
+
+      // Crear los huecos asociados al nicho
+      const huecos: HuecosNicho[] = [];
+      for (let i = 1; i <= habilitarDto.num_huecos; i++) {
+        const hueco = this.huecosNichoRepository.create({
+          num_hueco: i,
+          estado: 'Disponible',
+          id_nicho: nichoActualizado,
+        });
+        huecos.push(hueco);
+      }
+      const huecosCreados = await this.huecosNichoRepository.save(huecos);
+
+      return {
+        id_nicho: nichoActualizado.id_nicho,
+        fila: nichoActualizado.fila,
+        columna: nichoActualizado.columna,
+        tipo: nichoActualizado.tipo,
+        num_huecos: nichoActualizado.num_huecos,
+        estadoVenta: nichoActualizado.estadoVenta,
+        fecha_construccion: nichoActualizado.fecha_construccion,
+        observaciones: nichoActualizado.observaciones,
+        bloque: {
+          id_bloque: nichoActualizado.id_bloque.id_bloque,
+          nombre: nichoActualizado.id_bloque.nombre,
+          numero: nichoActualizado.id_bloque.numero,
+        },
+        cementerio: {
+          id_cementerio: nichoActualizado.id_cementerio.id_cementerio,
+          nombre: nichoActualizado.id_cementerio.nombre,
+        },
+        huecos: huecosCreados.map(h => ({
+          id_detalle_hueco: h.id_detalle_hueco,
+          num_hueco: h.num_hueco,
+          estado: h.estado,
+        })),
+        mensaje: `Nicho habilitado correctamente con ${huecosCreados.length} huecos`
+      };
+    } catch (error) {
+      if (error instanceof NotFoundException || error instanceof BadRequestException) {
+        throw error;
+      }
+      throw new InternalServerErrorException(
+        'Error al habilitar el nicho: ' + (error.message || error),
       );
     }
   }
