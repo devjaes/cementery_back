@@ -12,6 +12,7 @@ import {
 import { NichoService } from './nicho.service';
 import { CreateNichoDto } from './dto/create-nicho.dto';
 import { UpdateNichoDto } from './dto/update-nicho.dto';
+import { HabilitarNichoDto } from './dto/habilitar-nicho.dto';
 import {
   ApiTags,
   ApiOperation,
@@ -26,7 +27,10 @@ export class NichosController {
   constructor(private readonly nichosService: NichoService) {}
 
   @Post()
-  @ApiOperation({ summary: 'Crear un nuevo nicho' })
+  @ApiOperation({ 
+    summary: 'Crear un nuevo nicho manualmente',
+    description: 'NOTA: Normalmente los nichos se crean automáticamente al crear un bloque. Este endpoint es para casos especiales.'
+  })
   @ApiBody({
     type: CreateNichoDto,
     examples: {
@@ -34,11 +38,9 @@ export class NichosController {
         summary: 'Solo campos requeridos',
         value: {
           id_cementerio: '123e4567-e89b-12d3-a456-426614174000',
-          sector: 'A',
-          fila: '1',
-          numero: '15',
+          fila: 1,
+          columna: 5,
           tipo: 'Nicho',
-          fecha_construccion: '2023-01-01',
           num_huecos: 2,
         },
       },
@@ -46,14 +48,12 @@ export class NichosController {
         summary: 'Con campos opcionales',
         value: {
           id_cementerio: '123e4567-e89b-12d3-a456-426614174000',
-          sector: 'B',
-          fila: '2',
-          numero: '20',
-          tipo: 'Fosa',
-          fecha_construccion: '2022-05-10',
-          // fecha_adquisicion: "2022-06-01",
-          observaciones: 'Construido recientemente con mármol importado',
+          fila: 2,
+          columna: 3,
+          tipo: 'Mausoleo',
           num_huecos: 4,
+          fecha_construccion: '2022-05-10',
+          observaciones: 'Construido recientemente con mármol importado',
         },
       },
     },
@@ -68,6 +68,53 @@ export class NichosController {
   @ApiResponse({ status: 200, description: 'Lista de nichos' })
   findAll() {
     return this.nichosService.findAll();
+  }
+
+  @Post(':id/habilitar')
+  @ApiOperation({ summary: 'Habilitar un nicho deshabilitado' })
+  @ApiParam({ 
+    name: 'id', 
+    example: '123e4567-e89b-12d3-a456-426614174000',
+    description: 'ID del nicho a habilitar'
+  })
+  @ApiBody({
+    type: HabilitarNichoDto,
+    examples: {
+      ejemplo1: {
+        summary: 'Nicho básico',
+        value: {
+          tipo: 'Nicho',
+          num_huecos: 2,
+        },
+      },
+      ejemplo2: {
+        summary: 'Mausoleo con detalles',
+        value: {
+          tipo: 'Mausoleo',
+          num_huecos: 4,
+          fecha_construccion: '2024-01-15',
+          observaciones: 'Mausoleo familiar con acabados especiales',
+        },
+      },
+    },
+  })
+  @ApiResponse({ 
+    status: 200, 
+    description: 'Nicho habilitado exitosamente con sus huecos creados' 
+  })
+  @ApiResponse({ 
+    status: 400, 
+    description: 'El nicho ya está habilitado o datos inválidos' 
+  })
+  @ApiResponse({ 
+    status: 404, 
+    description: 'Nicho no encontrado' 
+  })
+  habilitarNicho(
+    @Param('id') id: string,
+    @Body() habilitarDto: HabilitarNichoDto
+  ) {
+    return this.nichosService.habilitarNicho(id, habilitarDto);
   }
 
   @Get('fallecidos/:busqueda')
@@ -117,9 +164,8 @@ export class NichosController {
     examples: {
       ejemplo1: {
         value: {
-          sector: 'B',
-          fila: '2',
-          numero: '20',
+          tipo: 'Mausoleo',
+          observaciones: 'Actualizado con nuevas especificaciones',
         },
       },
     },

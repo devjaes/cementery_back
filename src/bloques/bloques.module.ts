@@ -4,9 +4,10 @@ import { BloquesService } from './bloques.service';
 import { BloquesController } from './bloques.controller';
 import { Bloque } from './entities/bloque.entity';
 import { Cementerio } from 'src/cementerio/entities/cementerio.entity';
+import { Nicho } from 'src/nicho/entities/nicho.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Bloque, Cementerio])],
+  imports: [TypeOrmModule.forFeature([Bloque, Cementerio, Nicho])],
   controllers: [BloquesController],
   providers: [BloquesService],
   exports: [BloquesService, TypeOrmModule],

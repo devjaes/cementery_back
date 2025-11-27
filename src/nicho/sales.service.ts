@@ -107,9 +107,8 @@ export class NicheSalesService {
       return {
         nicho: {
           id: nicho.id_nicho,
-          sector: nicho.sector,
           fila: nicho.fila,
-          numero: nicho.numero,
+          columna: nicho.columna,
           estado: nicho.estadoVenta,
           cementerio: nicho.id_cementerio.nombre,
         },
@@ -175,9 +174,8 @@ async confirmarVentaNicho(confirmarVentaDto: ConfirmarVentaNichoDto) {
       return {
         nicho: {
           id: nicho.id_nicho,
-          sector: nicho.sector,
           fila: nicho.fila,
-          numero: nicho.numero,
+          columna: nicho.columna,
           estado: nicho.estadoVenta,
           cementerio: nicho.id_cementerio.nombre,
         },
@@ -232,9 +230,8 @@ async confirmarVentaNicho(confirmarVentaDto: ConfirmarVentaNichoDto) {
     return {
       nicho: {
         id: nichoVendido.id_nicho,
-        sector: nichoVendido.sector,
         fila: nichoVendido.fila,
-        numero: nichoVendido.numero,
+          columna: nicho.columna,
         estado: nichoVendido.estadoVenta,
         cementerio: nichoVendido.id_cementerio.nombre,
       },
@@ -408,9 +405,8 @@ async confirmarVentaNicho(confirmarVentaDto: ConfirmarVentaNichoDto) {
           return {
             nicho: {
               id: nicho.id_nicho,
-              sector: nicho.sector,
               fila: nicho.fila,
-              numero: nicho.numero,
+              columna: nicho.columna,
               estado: nicho.estadoVenta,
               cementerio: nicho.id_cementerio.nombre,
             },
@@ -498,9 +494,8 @@ async confirmarVentaNicho(confirmarVentaDto: ConfirmarVentaNichoDto) {
       return {
         nicho: {
           id: nicho.id_nicho,
-          sector: nicho.sector,
           fila: nicho.fila,
-          numero: nicho.numero,
+          columna: nicho.columna,
           estado: nicho.estadoVenta,
         },
         mensaje: 'Reserva cancelada exitosamente',
