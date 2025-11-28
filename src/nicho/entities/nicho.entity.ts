@@ -46,6 +46,12 @@ export class Nicho {
   @Column({ length: 20, nullable: true })
   tipo: string;
 
+  @Column({ type: 'varchar', length: 100, nullable: true })
+  sector: string;
+
+  @Column({ type: 'varchar', length: 100, nullable: true })
+  numero: string;
+
   @Column({ length: 20 })
   estado: string;
 
@@ -59,7 +65,7 @@ export class Nicho {
   @Column({ type: 'int', name: 'num_huecos', nullable: true })
   num_huecos: number;
 
-  @Column({ type: 'varchar', name: 'fecha_construccion', nullable:true })
+  @Column({ type: 'varchar', name: 'fecha_construccion', nullable: true })
   fecha_construccion: string;
 
   // @Column({ type: 'date', nullable: true })

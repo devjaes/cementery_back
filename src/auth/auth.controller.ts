@@ -110,12 +110,37 @@ export class AuthController {
   }
 
   @Post('profile')
-  // @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Obtener perfil de usuario' })
   @ApiOkResponse({ description: 'Perfil de usuario' })
   @ApiUnauthorizedResponse({ description: 'No autorizado' })
   getProfile(@Request() req) {
     return req.user;
+  }
+
+  @Post('me')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Obtener información del usuario actual' })
+  @ApiOkResponse({ 
+    description: 'Información del usuario actual',
+    schema: {
+      type: 'object',
+      properties: {
+        id_user: { type: 'string' },
+        cedula: { type: 'string' },
+        nombre: { type: 'string' },
+        apellido: { type: 'string' },
+        rol: { type: 'string' },
+        email: { type: 'string' },
+      },
+    },
+  })
+  @ApiUnauthorizedResponse({ description: 'No autorizado' })
+  async getCurrentUser(@Request() req) {
+    // Obtener información completa del usuario desde la base de datos
+    const user = await this.userService.findByCedula(req.user.cedula);
+    return user;
   }
 }

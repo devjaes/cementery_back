@@ -58,16 +58,6 @@ export class CreatePersonaDto {
   fecha_defuncion?: Date;
 
   @ApiPropertyOptional({
-    description: 'Fecha de inhumación',
-    type: 'string',
-    format: 'date',
-    example: '2023-01-12',
-  })
-  @IsOptional()
-  @IsDate()
-  fecha_inhumacion?: Date;
-
-  @ApiPropertyOptional({
     description: 'Lugar de defunción',
     example: 'Hospital General, Quito',
   })
