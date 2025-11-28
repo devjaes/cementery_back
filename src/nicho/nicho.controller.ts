@@ -8,6 +8,7 @@ import {
   Put,
   Patch,
   UseGuards,
+  Query,
 } from '@nestjs/common';
 import { NichoService } from './nicho.service';
 import { CreateNichoDto } from './dto/create-nicho.dto';
@@ -19,6 +20,7 @@ import {
   ApiBody,
   ApiParam,
   ApiResponse,
+  ApiQuery,
 } from '@nestjs/swagger';
 
 @ApiTags('nichos')
@@ -27,9 +29,10 @@ export class NichosController {
   constructor(private readonly nichosService: NichoService) {}
 
   @Post()
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Crear un nuevo nicho manualmente',
-    description: 'NOTA: Normalmente los nichos se crean automáticamente al crear un bloque. Este endpoint es para casos especiales.'
+    description:
+      'NOTA: Normalmente los nichos se crean automáticamente al crear un bloque. Este endpoint es para casos especiales.',
   })
   @ApiBody({
     type: CreateNichoDto,
@@ -64,18 +67,25 @@ export class NichosController {
   }
 
   @Get()
-  @ApiOperation({ summary: 'Obtener todos los nichos' })
-  @ApiResponse({ status: 200, description: 'Lista de nichos' })
-  findAll() {
-    return this.nichosService.findAll();
+  @ApiOperation({
+    summary: 'Obtener todos los nichos por ID de cementerio o todos los nichos',
+  })
+  @ApiQuery({
+    name: 'idCementerio',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+    description: 'ID del cementerio',
+    required: false,
+  })
+  findAll(@Query('idCementerio') idCementerio?: string) {
+    return this.nichosService.findAll(idCementerio);
   }
 
   @Post(':id/habilitar')
   @ApiOperation({ summary: 'Habilitar un nicho deshabilitado' })
-  @ApiParam({ 
-    name: 'id', 
+  @ApiParam({
+    name: 'id',
     example: '123e4567-e89b-12d3-a456-426614174000',
-    description: 'ID del nicho a habilitar'
+    description: 'ID del nicho a habilitar',
   })
   @ApiBody({
     type: HabilitarNichoDto,
@@ -98,21 +108,21 @@ export class NichosController {
       },
     },
   })
-  @ApiResponse({ 
-    status: 200, 
-    description: 'Nicho habilitado exitosamente con sus huecos creados' 
+  @ApiResponse({
+    status: 200,
+    description: 'Nicho habilitado exitosamente con sus huecos creados',
   })
-  @ApiResponse({ 
-    status: 400, 
-    description: 'El nicho ya está habilitado o datos inválidos' 
+  @ApiResponse({
+    status: 400,
+    description: 'El nicho ya está habilitado o datos inválidos',
   })
-  @ApiResponse({ 
-    status: 404, 
-    description: 'Nicho no encontrado' 
+  @ApiResponse({
+    status: 404,
+    description: 'Nicho no encontrado',
   })
   habilitarNicho(
     @Param('id') id: string,
-    @Body() habilitarDto: HabilitarNichoDto
+    @Body() habilitarDto: HabilitarNichoDto,
   ) {
     return this.nichosService.habilitarNicho(id, habilitarDto);
   }

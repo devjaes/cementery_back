@@ -126,16 +126,6 @@ export class PersonasService {
             'La fecha de defunción no puede ser anterior a la fecha de nacimiento',
           );
         }
-
-        if (createPersonaDto.fecha_inhumacion) {
-          const fechaInhumacion = new Date(createPersonaDto.fecha_inhumacion);
-
-          if (fechaInhumacion < fechaDefuncion) {
-            throw new BadRequestException(
-              'La fecha de inhumación no puede ser anterior a la fecha de defunción',
-            );
-          }
-        }
       } else {
         // Si NO es fallecido, los siguientes campos son obligatorios
         if (
@@ -294,14 +284,6 @@ export class PersonasService {
           throw new BadRequestException(
             'La fecha de defunción no puede ser anterior a la fecha de nacimiento',
           );
-        }
-        if (dto.fecha_inhumacion) {
-          const fechaInhumacion = new Date(dto.fecha_inhumacion);
-          if (fechaInhumacion < fechaDefuncion) {
-            throw new BadRequestException(
-              'La fecha de inhumación no puede ser anterior a la fecha de defunción',
-            );
-          }
         }
       } else {
         // Si NO es fallecido, los siguientes campos son obligatorios
