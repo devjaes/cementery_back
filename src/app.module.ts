@@ -29,6 +29,7 @@ import { Payment } from './payment/entities/payment.entity';
 import { MejorasModule } from './mejoras/mejoras.module';
 import { BloquesModule } from './bloques/bloques.module';
 import { Bloque } from './bloques/entities/bloque.entity';
+import { ReportsModule } from './reports/reports.module';
 
 @Module({
   imports: [
@@ -72,6 +73,7 @@ import { Bloque } from './bloques/entities/bloque.entity';
     SharedModule,
     PaymentModule,
     MejorasModule,
+    ReportsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
