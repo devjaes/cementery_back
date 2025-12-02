@@ -105,6 +105,32 @@ export class PropietariosNichosService {
   }
 
   /**
+   * Busca propietarios de nicho por el ID de la persona
+   */
+  async findByPersonaId(idPersona: string) {
+    try {
+      const propietarios = await this.propietarioRepo
+        .createQueryBuilder('propietario')
+        .leftJoinAndSelect('propietario.id_nicho', 'nicho')
+        .leftJoinAndSelect('propietario.id_persona', 'persona')
+        .where('persona.id_persona = :idPersona', { idPersona })
+        .getMany();
+
+      if (!propietarios || propietarios.length === 0) {
+        throw new NotFoundException(
+          `No propietarios found for persona with id ${idPersona}`,
+        );
+      }
+      return propietarios;
+    } catch (error) {
+      if (error instanceof NotFoundException) throw error;
+      throw new InternalServerErrorException(
+        'Error al buscar propietarios por id de persona: ' + (error.message || error),
+      );
+    }
+  }
+
+  /**
    * Obtiene todos los propietarios de nicho activos
    */
   findAll() {

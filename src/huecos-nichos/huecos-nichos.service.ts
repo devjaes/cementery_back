@@ -127,14 +127,17 @@ export class HuecosNichosService {
   findAll() {
     try {
       return this.huecoRepository
-        .find({
-          relations: ['id_nicho', 'id_fallecido'],
-        })
+        .createQueryBuilder('hueco')
+        .leftJoinAndSelect('hueco.id_nicho', 'nicho')
+        .leftJoinAndSelect('nicho.id_bloque', 'bloque')
+        .leftJoinAndSelect('hueco.id_fallecido', 'fallecido')
+        .getMany()
         .then((huecos) =>
           huecos.map((h) => ({
             ...h,
             nicho: h.id_nicho,
             fallecido: h.id_fallecido,
+            bloque: (h.id_nicho as any)?.id_bloque || null,
           })),
         );
     } catch (error) {
@@ -149,14 +152,18 @@ export class HuecosNichosService {
    */
   async findAllDisponibles() {
     try {
-      const huecos = await this.huecoRepository.find({
-        where: { estado: 'Disponible' },
-        relations: ['id_nicho', 'id_fallecido'],
-      });
+      const huecos = await this.huecoRepository
+        .createQueryBuilder('hueco')
+        .leftJoinAndSelect('hueco.id_nicho', 'nicho')
+        .leftJoinAndSelect('nicho.id_bloque', 'bloque')
+        .leftJoinAndSelect('hueco.id_fallecido', 'fallecido')
+        .where('hueco.estado = :estado', { estado: 'Disponible' })
+        .getMany();
       return huecos.map((h) => ({
         ...h,
         nicho: h.id_nicho,
         fallecido: h.id_fallecido,
+        bloque: (h.id_nicho as any)?.id_bloque || null,
       }));
     } catch (error) {
       throw new InternalServerErrorException(
@@ -171,10 +178,13 @@ export class HuecosNichosService {
    */
   async findOne(id: string) {
     try {
-      const hueco = await this.huecoRepository.findOne({
-        where: { id_detalle_hueco: id },
-        relations: ['id_nicho', 'id_fallecido'],
-      });
+      const hueco = await this.huecoRepository
+        .createQueryBuilder('hueco')
+        .leftJoinAndSelect('hueco.id_nicho', 'nicho')
+        .leftJoinAndSelect('nicho.id_bloque', 'bloque')
+        .leftJoinAndSelect('hueco.id_fallecido', 'fallecido')
+        .where('hueco.id_detalle_hueco = :id', { id })
+        .getOne();
       if (!hueco) {
         throw new NotFoundException(`Hueco con ID ${id} no encontrado`);
       }
@@ -186,6 +196,7 @@ export class HuecosNichosService {
         },
         nicho: hueco.id_nicho,
         fallecido: hueco.id_fallecido,
+        bloque: (hueco.id_nicho as any)?.id_bloque || null,
       };
     } catch (error) {
       if (error instanceof NotFoundException) throw error;
@@ -203,6 +214,7 @@ export class HuecosNichosService {
       const huecos = await this.huecoRepository
         .createQueryBuilder('hueco')
         .leftJoinAndSelect('hueco.id_nicho', 'nicho')
+        .leftJoinAndSelect('nicho.id_bloque', 'bloque')
         .leftJoinAndSelect('hueco.id_fallecido', 'fallecido')
         .where('nicho.id_nicho = :id_nicho', { id_nicho })
         .getMany();
@@ -212,6 +224,7 @@ export class HuecosNichosService {
         },
         nicho: h.id_nicho,
         fallecido: h.id_fallecido,
+        bloque: (h.id_nicho as any)?.id_bloque || null,
       }));
     } catch (error) {
       throw new InternalServerErrorException(
@@ -308,11 +321,13 @@ export class HuecosNichosService {
       const huecos = await this.huecoRepository
         .createQueryBuilder('hueco')
         .leftJoinAndSelect('hueco.id_nicho', 'nicho')
+        .leftJoinAndSelect('nicho.id_bloque', 'bloque')
         .where('nicho.id_cementerio = :id_cementerio', { id_cementerio })
         .getMany();
       return huecos.map((h) => ({
         ...h,
         nicho: h.id_nicho,
+        bloque: (h.id_nicho as any)?.id_bloque || null,
       }));
     } catch (error) {
       throw new InternalServerErrorException(
