@@ -228,6 +228,28 @@ export class MejorasService {
     return { metadata: document, filePath };
   }
 
+  async deleteDocument(id: string, filename: string) {
+    const mejora = await this.findOne(id);
+    const documentos = mejora.documentos ?? [];
+    const document = documentos.find((item) => item.filename === filename);
+    if (!document) {
+      throw new NotFoundException(`Documento ${filename} no encontrado para esta mejora`);
+    }
+
+    const filePath = path.join(this.getDocumentDir(id), filename);
+    try {
+      await fs.promises.unlink(filePath);
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code !== 'ENOENT') {
+        throw new InternalServerErrorException(`No se pudo eliminar el archivo: ${(error as Error).message}`);
+      }
+    }
+
+    mejora.documentos = documentos.filter((item) => item.filename !== filename);
+    await this.mejoraRepository.save(mejora);
+    return mejora.documentos;
+  }
+
   private generarCodigo(): string {
     const now = new Date();
     const year = now.getFullYear();

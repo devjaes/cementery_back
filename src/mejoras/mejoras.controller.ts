@@ -161,6 +161,15 @@ export class MejorasController {
     return new StreamableFile(fs.createReadStream(filePath));
   }
 
+  @Delete(':id/files/:filename')
+  @ApiOperation({ summary: 'Eliminar un documento PDF adjunto' })
+  @ApiParam({ name: 'filename', description: 'Nombre interno del archivo' })
+  @ApiOkResponse({ description: 'Documento eliminado' })
+  @ApiNotFoundResponse({ description: 'Documento no encontrado' })
+  deleteDocument(@Param('id') id: string, @Param('filename') filename: string) {
+    return this.mejorasService.deleteDocument(id, filename);
+  }
+
   @Patch(':id/aprobar')
   @ApiOperation({ summary: 'Registrar aprobación de la mejora' })
   @ApiParam({ name: 'id', description: 'Identificador de la mejora' })
