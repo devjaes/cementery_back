@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Injectable,
   InternalServerErrorException,
   NotFoundException,
@@ -12,6 +13,9 @@ import { Nicho } from 'src/nicho/entities/nicho.entity';
 import { Persona } from 'src/personas/entities/persona.entity';
 import { User } from 'src/user/entities/user.entity';
 import { MejorasPdfService } from './mejoras-pdf.service';
+import * as fs from 'fs';
+import * as path from 'path';
+import type { Express } from 'express';
 
 @Injectable()
 export class MejorasService {
@@ -182,6 +186,48 @@ export class MejorasService {
     return { buffer, filename };
   }
 
+  async uploadDocuments(id: string, files: Express.Multer.File[]) {
+    if (!files || files.length === 0) {
+      throw new BadRequestException('Debes adjuntar al menos un archivo PDF');
+    }
+
+    const mejora = await this.findOne(id);
+    const documentos = [...(mejora.documentos ?? [])];
+
+    files.forEach((file) => {
+      const metadata = {
+        filename: file.filename,
+        originalName: file.originalname,
+        url: `/mejoras/${id}/files/${encodeURIComponent(file.filename)}`,
+        uploadedAt: new Date().toISOString(),
+        contentType: file.mimetype,
+        size: file.size,
+      };
+      documentos.push(metadata);
+    });
+
+    mejora.documentos = documentos;
+    await this.mejoraRepository.save(mejora);
+    return documentos;
+  }
+
+  async listDocuments(id: string) {
+    const mejora = await this.findOne(id);
+    return mejora.documentos ?? [];
+  }
+
+  async getDocumentFile(id: string, filename: string) {
+    const documentos = await this.listDocuments(id);
+    const document = documentos.find((item) => item.filename === filename);
+    if (!document) {
+      throw new NotFoundException(`Documento ${filename} no encontrado para esta mejora`);
+    }
+
+    const filePath = path.join(this.getDocumentDir(id), filename);
+    await fs.promises.access(filePath, fs.constants.R_OK);
+    return { metadata: document, filePath };
+  }
+
   private generarCodigo(): string {
     const now = new Date();
     const year = now.getFullYear();
@@ -225,5 +271,9 @@ export class MejorasService {
       throw new NotFoundException(`Usuario con ID ${id} no encontrado`);
     }
     return usuario;
+  }
+
+  private getDocumentDir(id: string) {
+    return path.join(process.cwd(), 'uploads', 'mejoras', id);
   }
 }
