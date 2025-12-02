@@ -97,9 +97,8 @@ export class CementerioSeeder {
               Math.random() * propietarios.length,
             );
             nichos.push({
-              sector: sector.toString(),
-              fila: fila.toString(),
-              numero: numero.toString(),
+              fila: fila,
+              columna: numero,
               tipo:
                 numero <= 2
                   ? 'familiar'
@@ -108,7 +107,7 @@ export class CementerioSeeder {
                     : 'temporal',
               estado: Math.random() > 0.2 ? 'ocupado' : 'disponible',
               fecha_construccion: '2020-01-20',
-              observaciones: `Nicho Sector ${sector}, Fila ${fila}, Número ${numero}`,
+              observaciones: `Nicho Fila ${fila}, Columna ${numero}`,
               fecha_creacion: new Date().toISOString(),
               fecha_actualizacion: new Date().toISOString(),
               id_cementerio: cementerios[0],
@@ -127,9 +126,8 @@ export class CementerioSeeder {
               Math.random() * propietarios.length,
             );
             nichos.push({
-              sector: sector.toString(),
-              fila: fila.toString(),
-              numero: numero.toString(),
+              fila: fila,
+              columna: numero,
               tipo: numero <= 2 ? 'familiar' : 'individual',
               estado: Math.random() > 0.3 ? 'ocupado' : 'disponible',
               fecha_construccion: new Date('2018-04-01').toISOString(),
