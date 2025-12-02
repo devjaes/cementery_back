@@ -43,7 +43,7 @@ export class MejorasService {
         codigo: this.generarCodigo(),
         metodoSolicitud: dto.metodoSolicitud,
         codigoAutorizacion: dto.codigoAutorizacion ?? this.generarCodigoAutorizacion(),
-  entidad: dto.entidad ?? 'GADM Santiago de Pillaro',
+        entidad: dto.entidad ?? 'GADM Santiago de Pillaro',
         direccionEntidad: dto.direccionEntidad,
         panteoneroACargo: dto.panteoneroACargo,
         solicitanteDireccion: dto.solicitanteDireccion ?? solicitante?.direccion,
@@ -58,8 +58,18 @@ export class MejorasService {
         administradorNicho: dto.administradorNicho,
         tipoServicio: dto.tipoServicio,
         observacionServicio: dto.observacionServicio,
-        fechaInicio: new Date(dto.fechaInicio),
-        fechaFin: new Date(dto.fechaFin),
+        fechaInicio: this.parseRequiredDate(
+          dto.fechaInicio,
+          'fechaInicio',
+          'La fecha de inicio es requerida',
+          'La fecha de inicio debe tener un formato válido',
+        ),
+        fechaFin: this.parseRequiredDate(
+          dto.fechaFin,
+          'fechaFin',
+          'La fecha de finalización es requerida',
+          'La fecha de finalización debe tener un formato válido',
+        ),
         horarioTrabajo: dto.horarioTrabajo,
         condicion: dto.condicion,
         autorizacionTexto: dto.autorizacionTexto,
@@ -274,6 +284,24 @@ export class MejorasService {
     const year = now.getFullYear();
     const random = Math.floor(100 + Math.random() * 900);
     return `${random}-${year}`;
+  }
+
+  private parseRequiredDate(
+    value: string | undefined,
+    fieldKey: string,
+    requiredMessage: string,
+    invalidMessage: string,
+  ) {
+    if (!value || value.trim() === '') {
+      throw new BadRequestException(`${fieldKey}: ${requiredMessage}`);
+    }
+
+    const parsed = new Date(value);
+    if (Number.isNaN(parsed.getTime())) {
+      throw new BadRequestException(`${fieldKey}: ${invalidMessage}`);
+    }
+
+    return parsed;
   }
 
   private async lookupNicho(id: string) {
