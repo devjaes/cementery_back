@@ -26,6 +26,7 @@ import { MejorasService } from './mejoras.service';
 import { CreateMejoraDto } from './dto/create-mejora.dto';
 import { UpdateMejoraDto } from './dto/update-mejora.dto';
 import { AprobarMejoraDto } from './dto/aprobar-mejora.dto';
+import { NegarMejoraDto } from './dto/negar-mejora.dto';
 import { Response } from 'express';
 import { StreamableFile } from '@nestjs/common';
 import * as fs from 'fs';
@@ -175,6 +176,13 @@ export class MejorasController {
   @ApiParam({ name: 'id', description: 'Identificador de la mejora' })
   aprobar(@Param('id') id: string, @Body() body: AprobarMejoraDto) {
     return this.mejorasService.aprobar(id, body.aprobadoPorId);
+  }
+
+  @Patch(':id/negar')
+  @ApiOperation({ summary: 'Registrar rechazo de la mejora' })
+  @ApiParam({ name: 'id', description: 'Identificador de la mejora' })
+  negar(@Param('id') id: string, @Body() body: NegarMejoraDto) {
+    return this.mejorasService.negar(id, body.negadoPorId);
   }
 
   @Get(':id/formulario')

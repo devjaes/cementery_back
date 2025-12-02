@@ -178,6 +178,18 @@ export class MejorasService {
     return this.mejoraRepository.save(mejora);
   }
 
+  async negar(id: string, negadoPorId: string) {
+    const mejora = await this.findOne(id);
+    await this.lookupUsuario(negadoPorId);
+
+    mejora.aprobado = false;
+    mejora.aprobadoPor = undefined;
+    mejora.fechaAprobacion = undefined;
+    mejora.estado = 'Negado';
+
+    return this.mejoraRepository.save(mejora);
+  }
+
   async generarFormulario(id: string) {
     const mejora = await this.findOne(id);
     const buffer = await this.pdfService.build(mejora);
