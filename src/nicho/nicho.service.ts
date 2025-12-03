@@ -14,6 +14,7 @@ import { HuecosNicho } from 'src/huecos-nichos/entities/huecos-nicho.entity';
 import { Persona } from 'src/personas/entities/persona.entity';
 import { PropietarioNicho } from 'src/propietarios-nichos/entities/propietarios-nicho.entity';
 import { EstadoNicho } from './enum/estadoNicho.enum';
+import { TipoNicho, validarNumHuecosPorTipo, obtenerMensajeErrorHuecos } from './enum/tipoNicho.enum';
 import { Bloque } from 'src/bloques/entities/bloque.entity';
 
 @Injectable()
@@ -189,6 +190,27 @@ export class NichoService {
       if (nicho.estadoVenta !== EstadoNicho.DESHABILITADO) {
         throw new BadRequestException(
           `El nicho ya está habilitado. Estado actual: ${nicho.estadoVenta}`,
+        );
+      }
+
+      // Validar que el tipo de nicho sea válido
+      const tipoValido = Object.values(TipoNicho).includes(habilitarDto.tipo as TipoNicho);
+      if (!tipoValido) {
+        throw new BadRequestException(
+          `Tipo de nicho inválido. Tipos permitidos: ${Object.values(TipoNicho).join(', ')}`
+        );
+      }
+
+      // Validar que el número de huecos sea compatible con el tipo de nicho
+      const esValido = validarNumHuecosPorTipo(
+        habilitarDto.tipo as TipoNicho,
+        habilitarDto.num_huecos
+      );
+
+      if (!esValido) {
+        const mensajeError = obtenerMensajeErrorHuecos(habilitarDto.tipo as TipoNicho);
+        throw new BadRequestException(
+          `Número de huecos inválido para el tipo ${habilitarDto.tipo}. ${mensajeError}`
         );
       }
 

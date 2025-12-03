@@ -7,21 +7,27 @@ import {
   IsOptional,
   MaxLength,
   Min,
+  IsEnum,
+  ValidateIf,
+  Max,
 } from 'class-validator';
+import { TipoNicho } from '../enum/tipoNicho.enum';
 
 export class HabilitarNichoDto {
   @ApiProperty({
     description: 'Tipo de nicho',
-    enum: ['Nicho', 'Mausoleo', 'Fosa', 'Bóveda'],
-    example: 'Nicho',
+    enum: TipoNicho,
+    example: TipoNicho.NICHO,
     required: true,
   })
-  @IsString()
+  @IsEnum(TipoNicho, {
+    message: 'El tipo debe ser: Nicho, Mausoleo, Fosa o Bóveda',
+  })
   @IsNotEmpty()
-  tipo: string;
+  tipo: TipoNicho;
 
   @ApiProperty({
-    description: 'Cantidad de huecos del nicho',
+    description: 'Cantidad de huecos del nicho. Nicho/Mausoleo: ilimitados. Fosa/Bóveda: solo 1',
     example: 2,
     minimum: 1,
     required: true,
@@ -29,6 +35,10 @@ export class HabilitarNichoDto {
   @IsInt()
   @IsNotEmpty()
   @Min(1, { message: 'El nicho debe tener al menos 1 hueco' })
+  @ValidateIf((o) => o.tipo === TipoNicho.FOSA || o.tipo === TipoNicho.BOVEDA)
+  @Max(1, {
+    message: 'Fosa y Bóveda solo pueden tener exactamente 1 hueco',
+  })
   num_huecos: number;
 
   @ApiProperty({
