@@ -6,8 +6,8 @@ export class ReportsController {
   constructor(private readonly reportsService: ReportsService) {}
 
   @Get('owners')
-  getOwners() {
-    return this.reportsService.getOwners();
+  getOwners(@Query('cedula') cedula?: string) {
+    return this.reportsService.getOwners(cedula);
   }
 
   @Get('deceased')
@@ -16,12 +16,14 @@ export class ReportsController {
     @Query('endDate') endDate?: string,
     @Query('nicheId') nicheId?: string,
     @Query('cause') cause?: string,
+    @Query('cedula') cedula?: string,
   ) {
     return this.reportsService.getDeceased({
       startDate,
       endDate,
       nicheId,
       cause,
+      cedula,
     });
   }
 }
