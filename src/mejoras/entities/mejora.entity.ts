@@ -12,6 +12,15 @@ import { Persona } from 'src/personas/entities/persona.entity';
 import { User } from 'src/user/entities/user.entity';
 import { MetodoSolicitudMejora } from '../enum/metodo-solicitud.enum';
 
+export interface MejoraDocumento {
+  filename: string;
+  originalName: string;
+  url: string;
+  uploadedAt: string;
+  contentType: string;
+  size: number;
+}
+
 @Entity('mejoras')
 export class Mejora {
   @PrimaryGeneratedColumn('uuid')
@@ -105,6 +114,9 @@ export class Mejora {
 
   @Column({ type: 'varchar', length: 200, nullable: true })
   escombreraMunicipal?: string;
+
+  @Column({ type: 'jsonb', default: () => "'[]'" })
+  documentos: MejoraDocumento[];
 
   @Column({ default: false })
   aprobado: boolean;

@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Injectable,
   InternalServerErrorException,
   NotFoundException,
@@ -12,6 +13,9 @@ import { Nicho } from 'src/nicho/entities/nicho.entity';
 import { Persona } from 'src/personas/entities/persona.entity';
 import { User } from 'src/user/entities/user.entity';
 import { MejorasPdfService } from './mejoras-pdf.service';
+import * as fs from 'fs';
+import * as path from 'path';
+import type { Express } from 'express';
 
 @Injectable()
 export class MejorasService {
@@ -39,7 +43,7 @@ export class MejorasService {
         codigo: this.generarCodigo(),
         metodoSolicitud: dto.metodoSolicitud,
         codigoAutorizacion: dto.codigoAutorizacion ?? this.generarCodigoAutorizacion(),
-  entidad: dto.entidad ?? 'GADM Santiago de Pillaro',
+        entidad: dto.entidad ?? 'GADM Santiago de Pillaro',
         direccionEntidad: dto.direccionEntidad,
         panteoneroACargo: dto.panteoneroACargo,
         solicitanteDireccion: dto.solicitanteDireccion ?? solicitante?.direccion,
@@ -54,8 +58,18 @@ export class MejorasService {
         administradorNicho: dto.administradorNicho,
         tipoServicio: dto.tipoServicio,
         observacionServicio: dto.observacionServicio,
-        fechaInicio: new Date(dto.fechaInicio),
-        fechaFin: new Date(dto.fechaFin),
+        fechaInicio: this.parseRequiredDate(
+          dto.fechaInicio,
+          'fechaInicio',
+          'La fecha de inicio es requerida',
+          'La fecha de inicio debe tener un formato válido',
+        ),
+        fechaFin: this.parseRequiredDate(
+          dto.fechaFin,
+          'fechaFin',
+          'La fecha de finalización es requerida',
+          'La fecha de finalización debe tener un formato válido',
+        ),
         horarioTrabajo: dto.horarioTrabajo,
         condicion: dto.condicion,
         autorizacionTexto: dto.autorizacionTexto,
@@ -174,12 +188,88 @@ export class MejorasService {
     return this.mejoraRepository.save(mejora);
   }
 
+  async negar(id: string, negadoPorId: string) {
+    const mejora = await this.findOne(id);
+    await this.lookupUsuario(negadoPorId);
+
+    mejora.aprobado = false;
+    mejora.aprobadoPor = undefined;
+    mejora.fechaAprobacion = undefined;
+    mejora.estado = 'Negado';
+
+    return this.mejoraRepository.save(mejora);
+  }
+
   async generarFormulario(id: string) {
     const mejora = await this.findOne(id);
     const buffer = await this.pdfService.build(mejora);
     const filename = `mejora_${mejora.codigo}.pdf`;
 
     return { buffer, filename };
+  }
+
+  async uploadDocuments(id: string, files: Express.Multer.File[]) {
+    if (!files || files.length === 0) {
+      throw new BadRequestException('Debes adjuntar al menos un archivo PDF');
+    }
+
+    const mejora = await this.findOne(id);
+    const documentos = [...(mejora.documentos ?? [])];
+
+    files.forEach((file) => {
+      const metadata = {
+        filename: file.filename,
+        originalName: file.originalname,
+        url: `/mejoras/${id}/files/${encodeURIComponent(file.filename)}`,
+        uploadedAt: new Date().toISOString(),
+        contentType: file.mimetype,
+        size: file.size,
+      };
+      documentos.push(metadata);
+    });
+
+    mejora.documentos = documentos;
+    await this.mejoraRepository.save(mejora);
+    return documentos;
+  }
+
+  async listDocuments(id: string) {
+    const mejora = await this.findOne(id);
+    return mejora.documentos ?? [];
+  }
+
+  async getDocumentFile(id: string, filename: string) {
+    const documentos = await this.listDocuments(id);
+    const document = documentos.find((item) => item.filename === filename);
+    if (!document) {
+      throw new NotFoundException(`Documento ${filename} no encontrado para esta mejora`);
+    }
+
+    const filePath = path.join(this.getDocumentDir(id), filename);
+    await fs.promises.access(filePath, fs.constants.R_OK);
+    return { metadata: document, filePath };
+  }
+
+  async deleteDocument(id: string, filename: string) {
+    const mejora = await this.findOne(id);
+    const documentos = mejora.documentos ?? [];
+    const document = documentos.find((item) => item.filename === filename);
+    if (!document) {
+      throw new NotFoundException(`Documento ${filename} no encontrado para esta mejora`);
+    }
+
+    const filePath = path.join(this.getDocumentDir(id), filename);
+    try {
+      await fs.promises.unlink(filePath);
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code !== 'ENOENT') {
+        throw new InternalServerErrorException(`No se pudo eliminar el archivo: ${(error as Error).message}`);
+      }
+    }
+
+    mejora.documentos = documentos.filter((item) => item.filename !== filename);
+    await this.mejoraRepository.save(mejora);
+    return mejora.documentos;
   }
 
   private generarCodigo(): string {
@@ -194,6 +284,24 @@ export class MejorasService {
     const year = now.getFullYear();
     const random = Math.floor(100 + Math.random() * 900);
     return `${random}-${year}`;
+  }
+
+  private parseRequiredDate(
+    value: string | undefined,
+    fieldKey: string,
+    requiredMessage: string,
+    invalidMessage: string,
+  ) {
+    if (!value || value.trim() === '') {
+      throw new BadRequestException(`${fieldKey}: ${requiredMessage}`);
+    }
+
+    const parsed = new Date(value);
+    if (Number.isNaN(parsed.getTime())) {
+      throw new BadRequestException(`${fieldKey}: ${invalidMessage}`);
+    }
+
+    return parsed;
   }
 
   private async lookupNicho(id: string) {
@@ -225,5 +333,9 @@ export class MejorasService {
       throw new NotFoundException(`Usuario con ID ${id} no encontrado`);
     }
     return usuario;
+  }
+
+  private getDocumentDir(id: string) {
+    return path.join(process.cwd(), 'uploads', 'mejoras', id);
   }
 }
