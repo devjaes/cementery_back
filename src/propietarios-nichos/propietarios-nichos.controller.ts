@@ -125,6 +125,21 @@ export class PropietariosNichosController {
     return this.propietariosService.findByPersona(cedula);
   }
 
+  @Get('persona/:id')
+  @ApiOperation({
+    summary: 'Obtener propietarios de nicho por el ID de la persona',
+    description:
+      'Obtiene los registros de propietarios de nicho asociados a una persona por su id',
+  })
+  @ApiParam({ name: 'id', description: 'ID de la persona', type: String })
+  @ApiOkResponse({
+    description: 'Lista de propietarios de nicho obtenida exitosamente',
+    type: [CreatePropietarioNichoDto],
+  })
+  findByPersonaId(@Param('id') id: string) {
+    return this.propietariosService.findByPersonaId(id);
+  }
+
   @Patch(':id')
   // @UseGuards(JwtAuthGuard, RolesGuard)
   @ApiOperation({
