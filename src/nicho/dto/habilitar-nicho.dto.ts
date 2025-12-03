@@ -10,19 +10,27 @@ import {
   IsEnum,
   ValidateIf,
   Max,
+  registerDecorator,
+  ValidationOptions,
+  ValidationArguments,
 } from 'class-validator';
-import { TipoNicho } from '../enum/tipoNicho.enum';
+import { TipoNicho, validarNumHuecosPorTipo, obtenerMensajeErrorHuecos } from '../enum/tipoNicho.enum';
 
 export class HabilitarNichoDto {
   @ApiProperty({
     description: 'Tipo de nicho',
     enum: TipoNicho,
+    enumName: 'TipoNicho',
     example: TipoNicho.NICHO,
     required: true,
+    examples: {
+      nicho: { value: TipoNicho.NICHO, description: 'Permite múltiples huecos sin límite' },
+      mausoleo: { value: TipoNicho.MAUSOLEO, description: 'Permite múltiples huecos sin límite' },
+      fosa: { value: TipoNicho.FOSA, description: 'Solo permite 1 hueco' },
+      boveda: { value: TipoNicho.BOVEDA, description: 'Solo permite 1 hueco' },
+    },
   })
-  @IsEnum(TipoNicho, {
-    message: 'El tipo debe ser: Nicho, Mausoleo, Fosa o Bóveda',
-  })
+  @IsEnum(TipoNicho, { message: 'Tipo de nicho no válido. Debe ser: Nicho, Mausoleo, Fosa o Bóveda' })
   @IsNotEmpty()
   tipo: TipoNicho;
 
@@ -35,9 +43,8 @@ export class HabilitarNichoDto {
   @IsInt()
   @IsNotEmpty()
   @Min(1, { message: 'El nicho debe tener al menos 1 hueco' })
-  @ValidateIf((o) => o.tipo === TipoNicho.FOSA || o.tipo === TipoNicho.BOVEDA)
-  @Max(1, {
-    message: 'Fosa y Bóveda solo pueden tener exactamente 1 hueco',
+  @ValidarHuecosPorTipo({
+    message: 'Número de huecos inválido para el tipo de nicho seleccionado',
   })
   num_huecos: number;
 
@@ -63,4 +70,30 @@ export class HabilitarNichoDto {
     message: 'Las observaciones no deben exceder los 500 caracteres',
   })
   observaciones?: string;
+}
+
+/**
+ * Validador personalizado para verificar que num_huecos sea válido según el tipo de nicho
+ */
+function ValidarHuecosPorTipo(validationOptions?: ValidationOptions) {
+  return function (object: Object, propertyName: string) {
+    registerDecorator({
+      name: 'validarHuecosPorTipo',
+      target: object.constructor,
+      propertyName: propertyName,
+      options: validationOptions,
+      validator: {
+        validate(value: any, args: ValidationArguments) {
+          const dto = args.object as HabilitarNichoDto;
+          if (!dto.tipo || !value) return true; // Dejar que otros validadores manejen campos vacíos
+          return validarNumHuecosPorTipo(dto.tipo as TipoNicho, value);
+        },
+        defaultMessage(args: ValidationArguments) {
+          const dto = args.object as HabilitarNichoDto;
+          if (!dto.tipo) return 'Tipo de nicho requerido';
+          return obtenerMensajeErrorHuecos(dto.tipo as TipoNicho);
+        },
+      },
+    });
+  };
 }
