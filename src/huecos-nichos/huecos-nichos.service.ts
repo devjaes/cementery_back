@@ -9,12 +9,17 @@ import { UpdateHuecosNichoDto } from './dto/update-huecos-nicho.dto';
 import { HuecosNicho } from './entities/huecos-nicho.entity';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
+import { Nicho } from 'src/nicho/entities/nicho.entity';
+import { TipoNicho, puedeAgregarHuecos, obtenerMensajeErrorHuecos } from 'src/nicho/enum/tipoNicho.enum';
 
 @Injectable()
 export class HuecosNichosService {
-  @InjectRepository(HuecosNicho)
-  private readonly huecoRepository: Repository<HuecosNicho>;
-  constructor() {}
+  constructor(
+    @InjectRepository(HuecosNicho)
+    private readonly huecoRepository: Repository<HuecosNicho>,
+    @InjectRepository(Nicho)
+    private readonly nichoRepository: Repository<Nicho>,
+  ) {}
 
   /**
    * Crea un nuevo hueco para un nicho
@@ -50,13 +55,41 @@ export class HuecosNichosService {
         };
       }
 
-      // Obtener el número de huecos existentes para el nicho y asignar el siguiente número
+      // Obtener el nicho para validar el tipo y restricciones
+      const nicho = await this.nichoRepository.findOne({
+        where: { id_nicho: createHuecosNichoDto.id_nicho.id_nicho },
+      });
+
+      if (!nicho) {
+        throw new NotFoundException(
+          `Nicho con ID ${createHuecosNichoDto.id_nicho.id_nicho} no encontrado`,
+        );
+      }
+
+      // Validar que el nicho esté habilitado (tenga tipo)
+      if (!nicho.tipo) {
+        throw new BadRequestException(
+          'El nicho debe estar habilitado antes de agregar huecos',
+        );
+      }
+
+      // Obtener el número de huecos existentes para el nicho
       const count = await this.huecoRepository
         .createQueryBuilder('hueco')
         .where('hueco.id_nicho = :id_nicho', {
           id_nicho: createHuecosNichoDto.id_nicho.id_nicho,
         })
         .getCount();
+
+      // Validar si se puede agregar un hueco más según el tipo de nicho
+      const tipoNicho = nicho.tipo as TipoNicho;
+      if (!puedeAgregarHuecos(tipoNicho, count)) {
+        const mensajeError = obtenerMensajeErrorHuecos(tipoNicho);
+        throw new BadRequestException(
+          `No se puede agregar más huecos a este nicho. ${mensajeError}. Huecos actuales: ${count}`,
+        );
+      }
+
       createHuecosNichoDto.num_hueco = count + 1;
 
       // Guardar archivo en uploads/ampliaciones
@@ -99,17 +132,8 @@ export class HuecosNichosService {
       const savedHueco = await this.huecoRepository.save(hueco);
 
       // Actualizar el número de huecos en el nicho
-      const nichoRepo = this.huecoRepository.manager.getRepository('Nicho');
-      const nicho = await nichoRepo
-        .createQueryBuilder('nicho')
-        .where('nicho.id_nicho = :id_nicho', {
-          id_nicho: createHuecosNichoDto.id_nicho.id_nicho,
-        })
-        .getOne();
-      if (nicho) {
-        nicho.num_huecos = count + 1;
-        await nichoRepo.save(nicho);
-      }
+      nicho.num_huecos = count + 1;
+      await this.nichoRepository.save(nicho);
 
       return {
         hueco: savedHueco,
@@ -299,15 +323,50 @@ export class HuecosNichosService {
   }
 
   /**
-   * Elimina un hueco por su ID
+   * Elimina un hueco por su ID y actualiza el num_huecos del nicho
    */
   async remove(id: string) {
     try {
+      // Obtener el hueco antes de eliminarlo para saber a qué nicho pertenece
+      const hueco = await this.huecoRepository.findOne({
+        where: { id_detalle_hueco: id },
+        relations: ['id_nicho'],
+      });
+
+      if (!hueco) {
+        throw new NotFoundException(`Hueco con ID ${id} no encontrado`);
+      }
+
+      const id_nicho = hueco.id_nicho?.id_nicho;
+
+      // Eliminar el hueco
       const result = await this.huecoRepository.delete(id);
       if (result.affected === 0) {
         throw new NotFoundException(`Hueco con ID ${id} no encontrado`);
       }
-      return { deleted: true, id };
+
+      // Si el hueco pertenecía a un nicho, actualizar el num_huecos
+      if (id_nicho) {
+        const huecosRestantes = await this.huecoRepository
+          .createQueryBuilder('hueco')
+          .where('hueco.id_nicho = :id_nicho', { id_nicho })
+          .getCount();
+
+        const nichoActualizado = await this.nichoRepository.findOne({
+          where: { id_nicho },
+        });
+
+        if (nichoActualizado) {
+          nichoActualizado.num_huecos = huecosRestantes;
+          await this.nichoRepository.save(nichoActualizado);
+        }
+      }
+
+      return { 
+        deleted: true, 
+        id,
+        mensaje: 'Hueco eliminado y número de huecos del nicho actualizado',
+      };
     } catch (error) {
       if (error instanceof NotFoundException) throw error;
       throw new InternalServerErrorException(
