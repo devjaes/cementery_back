@@ -14,6 +14,7 @@ import { NichoService } from './nicho.service';
 import { CreateNichoDto } from './dto/create-nicho.dto';
 import { UpdateNichoDto } from './dto/update-nicho.dto';
 import { HabilitarNichoDto } from './dto/habilitar-nicho.dto';
+import { TipoNicho } from './enum/tipoNicho.enum';
 import {
   ApiTags,
   ApiOperation,
@@ -43,8 +44,6 @@ export class NichosController {
           id_cementerio: '123e4567-e89b-12d3-a456-426614174000',
           fila: 1,
           columna: 5,
-          tipo: 'Nicho',
-          num_huecos: 2,
         },
       },
       conOpcionales: {
@@ -53,10 +52,6 @@ export class NichosController {
           id_cementerio: '123e4567-e89b-12d3-a456-426614174000',
           fila: 2,
           columna: 3,
-          tipo: 'Mausoleo',
-          num_huecos: 4,
-          fecha_construccion: '2022-05-10',
-          observaciones: 'Construido recientemente con mármol importado',
         },
       },
     },
@@ -91,19 +86,36 @@ export class NichosController {
     type: HabilitarNichoDto,
     examples: {
       ejemplo1: {
-        summary: 'Nicho básico',
+        summary: 'Nicho básico (huecos ilimitados)',
         value: {
-          tipo: 'Nicho',
+          tipo: TipoNicho.NICHO,
           num_huecos: 2,
         },
       },
       ejemplo2: {
-        summary: 'Mausoleo con detalles',
+        summary: 'Mausoleo con detalles (huecos ilimitados)',
         value: {
-          tipo: 'Mausoleo',
+          tipo: TipoNicho.MAUSOLEO,
           num_huecos: 4,
           fecha_construccion: '2024-01-15',
           observaciones: 'Mausoleo familiar con acabados especiales',
+        },
+      },
+      ejemplo3: {
+        summary: 'Fosa (solo 1 hueco permitido)',
+        value: {
+          tipo: TipoNicho.FOSA,
+          num_huecos: 1,
+          observaciones: 'Fosa individual',
+        },
+      },
+      ejemplo4: {
+        summary: 'Bóveda (solo 1 hueco permitido)',
+        value: {
+          tipo: TipoNicho.BOVEDA,
+          num_huecos: 1,
+          fecha_construccion: '2024-01-20',
+          observaciones: 'Bóveda familiar',
         },
       },
     },
@@ -114,7 +126,7 @@ export class NichosController {
   })
   @ApiResponse({
     status: 400,
-    description: 'El nicho ya está habilitado o datos inválidos',
+    description: 'El nicho ya está habilitado, datos inválidos o restricciones de tipo incumplidas (Fosa/Bóveda solo permiten 1 hueco)',
   })
   @ApiResponse({
     status: 404,

@@ -13,15 +13,18 @@ export class ReportsService {
     private readonly inhumacionRepository: Repository<Inhumacion>,
   ) {}
 
-  async getOwners() {
-    const owners = await this.propietarioNichoRepository
+  async getOwners(cedula?: string) {
+    const query = this.propietarioNichoRepository
       .createQueryBuilder('propietario')
       .leftJoinAndSelect('propietario.id_persona', 'persona')
       .leftJoinAndSelect('propietario.id_nicho', 'nicho')
-      .leftJoinAndSelect('nicho.id_bloque', 'bloque')
-      .getMany();
+      .leftJoinAndSelect('nicho.id_bloque', 'bloque');
 
-    return owners;
+    if (cedula) {
+      query.where('persona.cedula LIKE :cedula', { cedula: `%${cedula}%` });
+    }
+
+    return query.getMany();
   }
 
   async getDeceased(filters: {
@@ -29,6 +32,7 @@ export class ReportsService {
     endDate?: string;
     nicheId?: string;
     cause?: string;
+    cedula?: string;
   }) {
     const query = this.inhumacionRepository
       .createQueryBuilder('inhumacion')
@@ -52,6 +56,11 @@ export class ReportsService {
     if (filters.cause) {
       query.andWhere('fallecido.causa_defuncion ILIKE :cause', {
         cause: `%${filters.cause}%`,
+      });
+    }
+    if (filters.cedula) {
+      query.andWhere('fallecido.cedula LIKE :cedula', {
+        cedula: `%${filters.cedula}%`,
       });
     }
 
