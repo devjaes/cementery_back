@@ -347,24 +347,59 @@ export class MejorasPdfService {
   }
 
   private formatDate(date?: Date | string | null): string {
-    if (!date) return '';
-    const value = new Date(date);
-    if (Number.isNaN(value.getTime())) return '';
-    return value.toISOString().split('T')[0];
+    const parsed = this.parseDateOnlyAware(date);
+    if (!parsed) return '';
+    // Siempre devolver YYYY-MM-DD evitando corrimientos de zona horaria
+    const year = parsed.getUTCFullYear();
+    const month = String(parsed.getUTCMonth() + 1).padStart(2, '0');
+    const day = String(parsed.getUTCDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
   }
 
   private formatLongDate(date?: Date | string | null): string {
-    if (!date) return '';
-    const value = new Date(date);
-    if (Number.isNaN(value.getTime())) return '';
-    return value
-      .toLocaleDateString('es-EC', {
-        weekday: 'long',
-        day: '2-digit',
-        month: 'long',
-        year: 'numeric',
-      })
-      .toUpperCase();
+    const parsed = this.parseDateOnlyAware(date);
+    if (!parsed) return '';
+
+    // Forzar fecha en zona America/Guayaquil sin corrimiento
+    const formatter = new Intl.DateTimeFormat('es-EC', {
+      timeZone: 'America/Guayaquil',
+      weekday: 'long',
+      day: '2-digit',
+      month: 'long',
+      year: 'numeric',
+    });
+
+    // Si viene como fecha (sin hora), construimos string YYYY-MM-DDT00:00:00-05:00 para evitar desfase
+    if (typeof date === 'string') {
+      const match = /^([0-9]{4})-([0-9]{2})-([0-9]{2})$/.exec(date.trim());
+      if (match) {
+        const [, y, m, d] = match;
+        const asLocal = new Date(`${y}-${m}-${d}T00:00:00-05:00`);
+        return formatter.format(asLocal).toUpperCase();
+      }
+    }
+
+    return formatter.format(parsed).toUpperCase();
+  }
+
+  // Parsea fechas YYYY-MM-DD sin corrimiento de tz; si viene con hora, usa Date estándar
+  private parseDateOnlyAware(date?: Date | string | null): Date | null {
+    if (!date) return null;
+
+    if (typeof date === 'string') {
+      const trimmed = date.trim();
+      const match = /^([0-9]{4})-([0-9]{2})-([0-9]{2})$/.exec(trimmed);
+      if (match) {
+        const [, y, m, d] = match;
+        // Crear fecha en UTC para ese día concreto y luego formatear con zona de Ecuador
+        return new Date(Date.UTC(Number(y), Number(m) - 1, Number(d)));
+      }
+      const parsed = new Date(trimmed);
+      return Number.isNaN(parsed.getTime()) ? null : parsed;
+    }
+
+    const parsed = new Date(date);
+    return Number.isNaN(parsed.getTime()) ? null : parsed;
   }
 
   private upper(value?: string | null): string {
