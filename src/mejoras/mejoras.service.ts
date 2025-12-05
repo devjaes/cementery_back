@@ -58,13 +58,13 @@ export class MejorasService {
         administradorNicho: dto.administradorNicho,
         tipoServicio: dto.tipoServicio,
         observacionServicio: dto.observacionServicio,
-        fechaInicio: this.parseRequiredDate(
+        fechaInicio: this.validateDateToIsoString(
           dto.fechaInicio,
           'fechaInicio',
           'La fecha de inicio es requerida',
           'La fecha de inicio debe tener un formato válido',
         ),
-        fechaFin: this.parseRequiredDate(
+        fechaFin: this.validateDateToIsoString(
           dto.fechaFin,
           'fechaFin',
           'La fecha de finalización es requerida',
@@ -79,6 +79,8 @@ export class MejorasService {
         nicho,
         solicitante,
         fallecido,
+        // Forzar fecha de creación según zona horaria de Ecuador (America/Guayaquil) para evitar desfases de +1 día
+        fechaCreacion: this.todayInEcuadorMidnight(),
       });
 
       return await this.mejoraRepository.save(mejora);
@@ -149,9 +151,21 @@ export class MejorasService {
         observacionServicio:
           dto.observacionServicio ?? mejora.observacionServicio,
         fechaInicio: dto.fechaInicio
-          ? new Date(dto.fechaInicio)
+          ? this.validateDateToIsoString(
+              dto.fechaInicio,
+              'fechaInicio',
+              'La fecha de inicio es requerida',
+              'La fecha de inicio debe tener un formato válido',
+            )
           : mejora.fechaInicio,
-        fechaFin: dto.fechaFin ? new Date(dto.fechaFin) : mejora.fechaFin,
+        fechaFin: dto.fechaFin
+          ? this.validateDateToIsoString(
+              dto.fechaFin,
+              'fechaFin',
+              'La fecha de finalización es requerida',
+              'La fecha de finalización debe tener un formato válido',
+            )
+          : mejora.fechaFin,
         horarioTrabajo: dto.horarioTrabajo ?? mejora.horarioTrabajo,
         condicion: dto.condicion ?? mejora.condicion,
         autorizacionTexto: dto.autorizacionTexto ?? mejora.autorizacionTexto,
@@ -286,7 +300,7 @@ export class MejorasService {
     return `${random}-${year}`;
   }
 
-  private parseRequiredDate(
+  private validateDateToIsoString(
     value: string | undefined,
     fieldKey: string,
     requiredMessage: string,
@@ -296,12 +310,47 @@ export class MejorasService {
       throw new BadRequestException(`${fieldKey}: ${requiredMessage}`);
     }
 
-    const parsed = new Date(value);
-    if (Number.isNaN(parsed.getTime())) {
+    const normalized = this.normalizeDateString(value);
+    if (!normalized) {
       throw new BadRequestException(`${fieldKey}: ${invalidMessage}`);
     }
 
-    return parsed;
+    return normalized;
+  }
+
+  // Normaliza fecha (YYYY-MM-DD o ISO) a un string YYYY-MM-DD sin corrimientos de tz
+  private normalizeDateString(value: string): string | null {
+    const trimmed = value.trim();
+
+    const dateOnlyMatch = /^([0-9]{4})-([0-9]{2})-([0-9]{2})$/.exec(trimmed);
+    if (dateOnlyMatch) {
+      const [, year, month, day] = dateOnlyMatch;
+      return `${year}-${month}-${day}`;
+    }
+
+    const parsed = new Date(trimmed);
+    if (Number.isNaN(parsed.getTime())) {
+      return null;
+    }
+
+    const year = parsed.getUTCFullYear();
+    const month = String(parsed.getUTCMonth() + 1).padStart(2, '0');
+    const day = String(parsed.getUTCDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+
+  // Retorna un Date en la medianoche de Ecuador (America/Guayaquil) para la fecha actual
+  private todayInEcuadorMidnight(): Date {
+    const formatter = new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'America/Guayaquil',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    });
+
+    const todayStr = formatter.format(new Date()); // YYYY-MM-DD según zona horaria de Ecuador
+    // Construir Date en medianoche de Ecuador para evitar corrimientos por tz al serializar
+    return new Date(`${todayStr}T00:00:00-05:00`);
   }
 
   private async lookupNicho(id: string) {
