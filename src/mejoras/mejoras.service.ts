@@ -79,6 +79,8 @@ export class MejorasService {
         nicho,
         solicitante,
         fallecido,
+        // Forzar fecha de creación según zona horaria de Ecuador (America/Guayaquil) para evitar desfases de +1 día
+        fechaCreacion: this.todayInEcuadorMidnight(),
       });
 
       return await this.mejoraRepository.save(mejora);
@@ -335,6 +337,20 @@ export class MejorasService {
     const month = String(parsed.getUTCMonth() + 1).padStart(2, '0');
     const day = String(parsed.getUTCDate()).padStart(2, '0');
     return `${year}-${month}-${day}`;
+  }
+
+  // Retorna un Date en la medianoche de Ecuador (America/Guayaquil) para la fecha actual
+  private todayInEcuadorMidnight(): Date {
+    const formatter = new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'America/Guayaquil',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    });
+
+    const todayStr = formatter.format(new Date()); // YYYY-MM-DD según zona horaria de Ecuador
+    // Construir Date en medianoche de Ecuador para evitar corrimientos por tz al serializar
+    return new Date(`${todayStr}T00:00:00-05:00`);
   }
 
   private async lookupNicho(id: string) {
