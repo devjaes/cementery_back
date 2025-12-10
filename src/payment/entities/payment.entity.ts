@@ -87,6 +87,13 @@ export class Payment {
   })
   buyerDirection: string;
 
+  @Column({
+    type: 'varchar',
+    length: 255,
+    nullable: true,
+  })
+  deceasedName: string;
+
   @UpdateDateColumn({ type: 'timestamp' })
   updatedDate: Date;
 }

@@ -62,4 +62,8 @@ export class CreatePaymentDto {
   @IsString()
   @IsOptional()
   buyerDirection?: string;
+
+  @IsString()
+  @IsOptional()
+  deceasedName?: string;
 }
