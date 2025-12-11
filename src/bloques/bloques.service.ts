@@ -124,19 +124,22 @@ export class BloquesService {
       for (let fila = 1; fila <= savedBloque.numero_filas; fila++) {
         for (let columna = 1; columna <= savedBloque.numero_columnas; columna++) {
           const fechaCreacion = new Date().toISOString();
-          const nicho = this.nichoRepository.create({
-            id_bloque: savedBloque as any,
-            id_cementerio: cementerio as any,
-            fila: fila,
-            columna: columna,
-            estado: 'Activo',
-            // Si es tipo Bloque: habilitar con 1 hueco, si es Mausoleo: deshabilitar
-            estadoVenta: esTipoBloque ? EstadoNicho.DISPONIBLE : EstadoNicho.DESHABILITADO,
-            num_huecos: esTipoBloque ? 1 : null,
-            tipo: esTipoBloque ? 'Nicho Simple' : null,
-            fecha_construccion: esTipoBloque ? fechaCreacion : null,
-            fecha_adquisicion: esTipoBloque ? fechaCreacion : null,
-          });
+          const nicho = this.nichoRepository.create();
+          nicho.id_bloque = savedBloque as any;
+          nicho.id_cementerio = cementerio as any;
+          nicho.fila = fila;
+          nicho.columna = columna;
+          nicho.estado = 'Activo';
+          // Si es tipo Bloque: habilitar con 1 hueco, si es Mausoleo: deshabilitar
+          nicho.estadoVenta = esTipoBloque ? EstadoNicho.DISPONIBLE : EstadoNicho.DESHABILITADO;
+          
+          if (esTipoBloque) {
+            nicho.num_huecos = 1;
+            nicho.tipo = 'Nicho Simple';
+            nicho.fecha_construccion = fechaCreacion;
+            nicho.fecha_adquisicion = fechaCreacion;
+          }
+          
           nichos.push(nicho);
         }
       }
