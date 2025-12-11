@@ -10,6 +10,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Bloque } from './entities/bloque.entity';
 import { Cementerio } from 'src/cementerio/entities/cementerio.entity';
 import { Nicho } from 'src/nicho/entities/nicho.entity';
+import { HuecosNicho } from 'src/huecos-nichos/entities/huecos-nicho.entity';
 import { Like, Repository, Not } from 'typeorm';
 import { EstadoNicho } from 'src/nicho/enum/estadoNicho.enum';
 
@@ -22,6 +23,8 @@ export class BloquesService {
     private readonly cementerioRepository: Repository<Cementerio>,
     @InjectRepository(Nicho)
     private readonly nichoRepository: Repository<Nicho>,
+    @InjectRepository(HuecosNicho)
+    private readonly huecosNichoRepository: Repository<HuecosNicho>,
   ) {
     console.log('BloquesService initialized');
   }
@@ -81,6 +84,7 @@ export class BloquesService {
       bloque.numero = siguienteNumero; // Asignar número automáticamente
       bloque.numero_filas = createBloqueDto.numero_filas;
       bloque.numero_columnas = createBloqueDto.numero_columnas;
+      bloque.tipo_bloque = createBloqueDto.tipo_bloque || 'Bloque'; // Por defecto 'Bloque'
       // asignar la entidad Cementerio como relación
       bloque.cementerio = cementerio as any;
       try {
@@ -114,18 +118,24 @@ export class BloquesService {
       const savedBloque = await this.bloqueRepository.save(bloque);
 
       // Crear nichos automáticamente según filas y columnas
-      // Los nichos se crean SIN tipo ni num_huecos (se asignan al habilitar)
       const nichos: Nicho[] = [];
+      const esTipoBloque = savedBloque.tipo_bloque === 'Bloque';
+      
       for (let fila = 1; fila <= savedBloque.numero_filas; fila++) {
         for (let columna = 1; columna <= savedBloque.numero_columnas; columna++) {
+          const fechaCreacion = new Date().toISOString();
           const nicho = this.nichoRepository.create({
             id_bloque: savedBloque as any,
             id_cementerio: cementerio as any,
             fila: fila,
             columna: columna,
             estado: 'Activo',
-            estadoVenta: EstadoNicho.DESHABILITADO,
-            // tipo y num_huecos se asignan al habilitar el nicho
+            // Si es tipo Bloque: habilitar con 1 hueco, si es Mausoleo: deshabilitar
+            estadoVenta: esTipoBloque ? EstadoNicho.DISPONIBLE : EstadoNicho.DESHABILITADO,
+            num_huecos: esTipoBloque ? 1 : null,
+            tipo: esTipoBloque ? 'Nicho Simple' : null,
+            fecha_construccion: esTipoBloque ? fechaCreacion : null,
+            fecha_adquisicion: esTipoBloque ? fechaCreacion : null,
           });
           nichos.push(nicho);
         }
@@ -133,10 +143,31 @@ export class BloquesService {
 
       const nichosCreados = await this.nichoRepository.save(nichos);
 
+      // Si es tipo Bloque, crear los huecos automáticamente
+      let huecosCreados = 0;
+      if (esTipoBloque) {
+        const huecos: HuecosNicho[] = [];
+        for (const nicho of nichosCreados) {
+          const hueco = this.huecosNichoRepository.create({
+            id_nicho: nicho,
+            num_hueco: 1,
+            estado: 'Disponible',
+          });
+          huecos.push(hueco);
+        }
+        const savedHuecos = await this.huecosNichoRepository.save(huecos);
+        huecosCreados = savedHuecos.length;
+      }
+
+      const mensajeTipo = esTipoBloque 
+        ? `Bloque tipo 'Bloque' creado con ${nichosCreados.length} nichos habilitados (1 hueco cada uno)`
+        : `Bloque tipo 'Mausoleo' creado con ${nichosCreados.length} nichos deshabilitados`;
+
       return { 
         bloque: savedBloque,
         nichos_creados: nichosCreados.length,
-        mensaje: `Bloque creado con ${nichosCreados.length} nichos deshabilitados`
+        huecos_creados: huecosCreados,
+        mensaje: mensajeTipo
       };
     } catch (error) {
       if (error instanceof NotFoundException || error instanceof BadRequestException) {

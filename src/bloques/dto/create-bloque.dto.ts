@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsString, IsInt, IsOptional, IsUUID, Min } from 'class-validator';
+import { IsNotEmpty, IsString, IsInt, IsOptional, IsUUID, Min, IsIn } from 'class-validator';
 
 export class CreateBloqueDto {
   @IsNotEmpty()
@@ -22,4 +22,9 @@ export class CreateBloqueDto {
   @IsInt()
   @Min(1)
   numero_columnas: number;
+
+  @IsOptional()
+  @IsString()
+  @IsIn(['Bloque', 'Mausoleo'])
+  tipo_bloque?: string; // 'Bloque' (default) o 'Mausoleo'
 }
