@@ -25,6 +25,9 @@ export class Bloque {
   @Column({ type: 'varchar', length: 50, default: 'Activo' })
   estado: string;
 
+  @Column({ type: 'varchar', length: 50, default: 'Bloque' })
+  tipo_bloque: string; // 'Bloque' o 'Mausoleo'
+
   @Column({ type: 'varchar', length: 100, nullable: true })
   fecha_creacion?: string;
 
