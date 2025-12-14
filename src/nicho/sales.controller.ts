@@ -14,7 +14,9 @@ import {
 import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiQuery } from '@nestjs/swagger';
 import { NicheSalesService } from './sales.service';
 import { ReservarNichoDto } from './dto/reservar-nicho.dto';
+import { ReservarMausoleoDto } from './dto/reservar-mausoleo.dto';
 import { ConfirmarVentaNichoDto } from './dto/confirmar-venta-nicho.dto';
+import { RegistrarPropietarioMausoleoDto } from './dto/registrar-propietario-mausoleo.dto';
 import { EstadoNicho } from './enum/estadoNicho.enum';
 import { PaymentService } from 'src/payment/payment.service';
 import { Response } from 'express';
@@ -286,6 +288,164 @@ export class NicheSalesController {
     try {
       return await this.nicheSalesService.cancelarReservaNicho(
         idNicho,
+        datos.motivo,
+      );
+    } catch (error) {
+      throw new HttpException(
+        error.message,
+        error.status || HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  // ============================================
+  // ENDPOINTS ESPECÍFICOS PARA MAUSOLEOS
+  // ============================================
+
+  @Post('mausoleo/reservar')
+  @ApiOperation({
+    summary: 'Reservar un mausoleo completo',
+    description: 'Reserva todos los nichos de un mausoleo y crea una orden de pago única',
+  })
+  @ApiResponse({
+    status: 201,
+    description: 'Mausoleo reservado exitosamente (PDF generado)',
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Bloque no es un mausoleo o no está disponible',
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Mausoleo o persona no encontrada',
+  })
+  async reservarMausoleo(
+    @Body() reservarMausoleoDto: ReservarMausoleoDto,
+    @Res() res: Response,
+  ) {
+    try {
+      // 1️⃣ Reservar el mausoleo y obtener la orden de pago
+      const reserva = await this.nicheSalesService.reservarMausoleo(reservarMausoleoDto);
+
+      // 2️⃣ Generar el recibo PDF
+      const receiptPath = await this.paymentService.generateReceipt(reserva.ordenPago.id);
+
+      // 3️⃣ Configurar los encabezados HTTP
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader(
+        'Content-Disposition',
+        `attachment; filename="recibo-reserva-mausoleo-${reserva.ordenPago.codigo}.pdf"`,
+      );
+      res.setHeader('X-Reserva-Data', JSON.stringify(reserva));
+      res.setHeader('Access-Control-Expose-Headers', 'X-Reserva-Data');
+
+      // 4️⃣ Enviar el PDF
+      return res.sendFile(receiptPath);
+    } catch (error) {
+      console.error('Error al generar recibo de mausoleo:', error);
+      throw new HttpException(
+        {
+          message: 'No se pudo generar el recibo de la reserva del mausoleo.',
+          error: error instanceof Error ? error.message : String(error),
+        },
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  @Patch('mausoleo/confirmar-venta')
+  @ApiOperation({
+    summary: 'Confirmar venta de mausoleo',
+    description: 'Confirma la venta de un mausoleo completo después de que finanzas aprueba el pago',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Venta de mausoleo confirmada exitosamente',
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Pago no corresponde a un mausoleo o datos inválidos',
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Pago o mausoleo no encontrado',
+  })
+  async confirmarVentaMausoleo(@Body() confirmarVentaDto: ConfirmarVentaNichoDto) {
+    try {
+      return await this.nicheSalesService.confirmarVentaMausoleo(confirmarVentaDto);
+    } catch (error) {
+      throw new HttpException(
+        error.message,
+        error.status || HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  @Post('mausoleo/registrar-propietario')
+  @ApiOperation({
+    summary: 'Registrar propietario de mausoleo',
+    description: 'Registra al propietario para todos los nichos del mausoleo después de confirmar la venta',
+  })
+  @ApiResponse({
+    status: 201,
+    description: 'Propietario registrado exitosamente para todos los nichos del mausoleo',
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Mausoleo no vendido o ya tiene propietario',
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Mausoleo o persona no encontrada',
+  })
+  async registrarPropietarioMausoleo(
+    @Body() datos: RegistrarPropietarioMausoleoDto,
+  ) {
+    try {
+      return await this.nicheSalesService.registrarPropietarioMausoleo(
+        datos.idBloque,
+        datos.idPersona,
+        datos.tipoDocumento,
+        datos.numeroDocumento,
+        datos.razon || 'Compra de mausoleo',
+      );
+    } catch (error) {
+      throw new HttpException(
+        error.message,
+        error.status || HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  @Delete('mausoleo/cancelar-reserva/:idBloque')
+  @ApiOperation({
+    summary: 'Cancelar reserva de mausoleo',
+    description: 'Cancela la reserva de un mausoleo completo (solo si el pago no ha sido confirmado)',
+  })
+  @ApiParam({
+    name: 'idBloque',
+    description: 'ID del bloque (mausoleo) a cancelar',
+    type: 'string',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Reserva de mausoleo cancelada exitosamente',
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'No se puede cancelar la reserva (nichos no reservados o pago ya confirmado)',
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Mausoleo no encontrado',
+  })
+  async cancelarReservaMausoleo(
+    @Param('idBloque') idBloque: string,
+    @Body() datos: { motivo: string },
+  ) {
+    try {
+      return await this.nicheSalesService.cancelarReservaMausoleo(
+        idBloque,
         datos.motivo,
       );
     } catch (error) {

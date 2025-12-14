@@ -118,8 +118,8 @@ export class BloquesService {
       const savedBloque = await this.bloqueRepository.save(bloque);
 
       // Crear nichos automáticamente según filas y columnas
+      // Ambos tipos (Bloque y Mausoleo) crean nichos DISPONIBLES con 1 hueco
       const nichos: Nicho[] = [];
-      const esTipoBloque = savedBloque.tipo_bloque === 'Bloque';
       
       for (let fila = 1; fila <= savedBloque.numero_filas; fila++) {
         for (let columna = 1; columna <= savedBloque.numero_columnas; columna++) {
@@ -130,15 +130,11 @@ export class BloquesService {
           nicho.fila = fila;
           nicho.columna = columna;
           nicho.estado = 'Activo';
-          // Si es tipo Bloque: habilitar con 1 hueco, si es Mausoleo: deshabilitar
-          nicho.estadoVenta = esTipoBloque ? EstadoNicho.DISPONIBLE : EstadoNicho.DESHABILITADO;
-          
-          if (esTipoBloque) {
-            nicho.num_huecos = 1;
-            nicho.tipo = 'Nicho Simple';
-            nicho.fecha_construccion = fechaCreacion;
-            nicho.fecha_adquisicion = fechaCreacion;
-          }
+          nicho.estadoVenta = EstadoNicho.DISPONIBLE;
+          nicho.num_huecos = 1;
+          nicho.tipo = 'Nicho Simple';
+          nicho.fecha_construccion = fechaCreacion;
+          nicho.fecha_adquisicion = fechaCreacion;
           
           nichos.push(nicho);
         }
@@ -146,30 +142,29 @@ export class BloquesService {
 
       const nichosCreados = await this.nichoRepository.save(nichos);
 
-      // Si es tipo Bloque, crear los huecos automáticamente
-      let huecosCreados = 0;
-      if (esTipoBloque) {
-        const huecos: HuecosNicho[] = [];
-        for (const nicho of nichosCreados) {
-          const hueco = this.huecosNichoRepository.create({
-            id_nicho: nicho,
-            num_hueco: 1,
-            estado: 'Disponible',
-          });
-          huecos.push(hueco);
-        }
-        const savedHuecos = await this.huecosNichoRepository.save(huecos);
-        huecosCreados = savedHuecos.length;
+      // Crear los huecos automáticamente para todos los nichos
+      const huecos: HuecosNicho[] = [];
+      for (const nicho of nichosCreados) {
+        const hueco = this.huecosNichoRepository.create({
+          id_nicho: nicho,
+          num_hueco: 1,
+          estado: 'Disponible',
+        });
+        huecos.push(hueco);
       }
+      const savedHuecos = await this.huecosNichoRepository.save(huecos);
 
-      const mensajeTipo = esTipoBloque 
-        ? `Bloque tipo 'Bloque' creado con ${nichosCreados.length} nichos habilitados (1 hueco cada uno)`
-        : `Bloque tipo 'Mausoleo' creado con ${nichosCreados.length} nichos deshabilitados`;
+      const mensajeTipo = savedBloque.tipo_bloque === 'Mausoleo'
+        ? `Mausoleo creado con ${nichosCreados.length} nichos habilitados (1 hueco cada uno). Venta conjunta habilitada.`
+        : `Bloque creado con ${nichosCreados.length} nichos habilitados (1 hueco cada uno)`;
 
       return { 
-        bloque: savedBloque,
+        bloque: {
+          ...savedBloque,
+          tipo_bloque: savedBloque.tipo_bloque,
+        },
         nichos_creados: nichosCreados.length,
-        huecos_creados: huecosCreados,
+        huecos_creados: savedHuecos.length,
         mensaje: mensajeTipo
       };
     } catch (error) {
@@ -207,7 +202,12 @@ export class BloquesService {
         where: { estado: Not('Inactivo') }, // Solo bloques activos
         relations: ['cementerio'],
       });
-      return { bloques };
+      // Incluir tipo_bloque en la respuesta
+      const bloquesConTipo = bloques.map(bloque => ({
+        ...bloque,
+        tipo_bloque: bloque.tipo_bloque || 'Bloque',
+      }));
+      return { bloques: bloquesConTipo };
     } catch (error) {
       throw new InternalServerErrorException(
         'Error al obtener los bloques: ' + (error.message || error),
@@ -227,7 +227,12 @@ export class BloquesService {
         },
         relations: ['cementerio'],
       });
-      return { bloques };
+      // Incluir tipo_bloque en la respuesta
+      const bloquesConTipo = bloques.map(bloque => ({
+        ...bloque,
+        tipo_bloque: bloque.tipo_bloque || 'Bloque',
+      }));
+      return { bloques: bloquesConTipo };
     } catch (error) {
       throw new InternalServerErrorException(
         'Error al obtener los bloques del cementerio: ' + (error.message || error),
@@ -250,7 +255,13 @@ export class BloquesService {
       if (!bloque) {
         throw new NotFoundException('Bloque no encontrado o inactivo');
       }
-      return { bloque };
+      // Incluir tipo_bloque en la respuesta
+      return { 
+        bloque: {
+          ...bloque,
+          tipo_bloque: bloque.tipo_bloque || 'Bloque',
+        }
+      };
     } catch (error) {
       if (error instanceof NotFoundException) {
         throw error;

@@ -17,6 +17,7 @@ export class Payment {
       'burial',
       'exhumation',
       'niche_sale',
+      'mausoleum_sale',
       'tomb_improvement',
       'hole_extension',
     ],
@@ -26,6 +27,7 @@ export class Payment {
     | 'burial'
     | 'exhumation'
     | 'niche_sale'
+    | 'mausoleum_sale'
     | 'tomb_improvement'
     | 'hole_extension';
 

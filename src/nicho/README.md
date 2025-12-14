@@ -1,14 +1,13 @@
 # Módulo de Nichos
 
-Este módulo gestiona los nichos dentro de los cementerios. Los nichos se crean automáticamente al crear un bloque con comportamiento diferenciado según el tipo de bloque.
+Este módulo gestiona los nichos dentro de los cementerios. Los nichos se crean automáticamente al crear un bloque, todos habilitados con 1 hueco disponible.
 
 ## Características
 
 - **Creación automática**: Los nichos se crean automáticamente al crear un bloque
-- **Tipos de bloque**: Comportamiento diferenciado para bloques tipo "Bloque" vs "Mausoleo"
-- **Bloques tipo "Bloque"**: Nichos habilitados automáticamente con 1 hueco disponible
-- **Bloques tipo "Mausoleo"**: Nichos deshabilitados que requieren habilitación manual
-- **Sistema de huecos**: Cada nicho puede tener múltiples huecos para diferentes ocupantes
+- **Todos habilitados**: Tanto bloques como mausoleos crean nichos DISPONIBLES con 1 hueco
+- **Sistema de huecos**: Cada nicho tiene 1 hueco disponible automáticamente
+- **Diferencia en venta**: Bloques (venta individual) vs Mausoleos (venta conjunta)
 - **Gestión de ventas**: Flujo completo de reserva, venta y asignación de propietarios
 - **Búsqueda avanzada**: Buscar nichos por fallecidos, propietarios o ubicación
 - **Relaciones**: Integración con cementerios, bloques, inhumaciones y propietarios
@@ -41,8 +40,7 @@ Este módulo gestiona los nichos dentro de los cementerios. Los nichos se crean 
 
 ```typescript
 enum EstadoNicho {
-  DESHABILITADO = 'Deshabilitado',  // Estado inicial
-  DISPONIBLE = 'Disponible',        // Habilitado y disponible
+  DISPONIBLE = 'Disponible',        // Estado inicial (todos los nichos)
   RESERVADO = 'Reservado',          // Reservado con orden de pago
   VENDIDO = 'Vendido',              // Venta confirmada
   BLOQUEADO = 'Bloqueado',          // Bloqueado temporalmente
@@ -51,17 +49,17 @@ enum EstadoNicho {
 
 ## Flujo de Trabajo
 
-### 1. Creación Automática Según Tipo de Bloque
+### 1. Creación Automática
 
-Al crear un bloque de **filas × columnas**, se crean automáticamente todos los nichos con comportamiento diferenciado:
+Al crear un bloque de **filas × columnas**, se crean automáticamente todos los nichos:
 
-#### **Tipo "Bloque"** (Por defecto)
+**Ambos tipos (Bloque y Mausoleo) crean nichos de la misma manera:**
 ```
-Ejemplo: Bloque 3×4 (3 filas, 4 columnas) - Tipo: "Bloque"
+Ejemplo: Bloque/Mausoleo 3×4 (3 filas, 4 columnas)
 
-Fila 1: [Nicho(1,1), Nicho(1,2), Nicho(1,3), Nicho(1,4)]
-Fila 2: [Nicho(2,1), Nicho(2,2), Nicho(2,3), Nicho(2,4)]
-Fila 3: [Nicho(3,1), Nicho(3,2), Nicho(3,3), Nicho(3,4)]
+Fila 1: [Nicho(1,1) ✅, Nicho(1,2) ✅, Nicho(1,3) ✅, Nicho(1,4) ✅]
+Fila 2: [Nicho(2,1) ✅, Nicho(2,2) ✅, Nicho(2,3) ✅, Nicho(2,4) ✅]
+Fila 3: [Nicho(3,1) ✅, Nicho(3,2) ✅, Nicho(3,3) ✅, Nicho(3,4) ✅]
 
 ✅ Estado inicial: DISPONIBLE
 ✅ Tipo: "Nicho Simple"
@@ -70,6 +68,10 @@ Fila 3: [Nicho(3,1), Nicho(3,2), Nicho(3,3), Nicho(3,4)]
 ✅ Estado del hueco: "Disponible"
 ✅ fecha_construccion: fecha actual
 ✅ fecha_adquisicion: fecha actual (misma que fecha_creacion)
+
+Diferencia:
+• Bloque: 12 nichos - venta individual
+• Mausoleo: 12 nichos - venta conjunta (un solo comprobante)
 ```
 
 **Creación al crear bloque:**
@@ -84,96 +86,28 @@ POST /bloques
 }
 ```
 
-**Resultado:**
-- 12 nichos creados en estado `DISPONIBLE`
-- 12 huecos creados automáticamente (1 por nicho)
-- Listos para reservar y vender inmediatamente
-
-#### **Tipo "Mausoleo"**
-```
-Ejemplo: Bloque 2×3 (2 filas, 3 columnas) - Tipo: "Mausoleo"
-
-Fila 1: [Nicho(1,1), Nicho(1,2), Nicho(1,3)]
-Fila 2: [Nicho(2,1), Nicho(2,2), Nicho(2,3)]
-
-⚠️ Estado inicial: DESHABILITADO
-⚠️ Tipo: null
-⚠️ Num_huecos: null
-⚠️ Sin huecos iniciales
-⚠️ Requiere habilitación manual
-```
-
 **Creación al crear bloque:**
 ```json
 POST /bloques
 {
   "id_cementerio": "uuid",
-  "nombre": "Mausoleo Familiar",
-  "numero_filas": 2,
-  "numero_columnas": 3,
-  "tipo_bloque": "Mausoleo"
+  "nombre": "Bloque A",  // o "Mausoleo Familiar"
+  "numero_filas": 3,
+  "numero_columnas": 4,
+  "tipo_bloque": "Bloque"  // o "Mausoleo"
 }
 ```
 
 **Resultado:**
-- 6 nichos creados en estado `DESHABILITADO`
-- Sin huecos iniciales
-- Requieren habilitación manual antes de usar
+- 12 nichos creados en estado `DISPONIBLE`
+- 12 huecos creados automáticamente (1 por nicho)
+- Listos para reservar y vender inmediatamente
+- **Bloque**: Venta individual por nicho
+- **Mausoleo**: Venta conjunta con un solo comprobante
 
-### 2. Habilitación de Nichos (Solo para Mausoleos)
+### 2. Flujo de Venta
 
-Para habilitar un nicho deshabilitado de un mausoleo:
-
-**POST /nichos/:id/habilitar**
-
-```json
-{
-  "tipo": "Nicho",
-  "num_huecos": 2,
-  "fecha_construccion": "2024-01-15",
-  "observaciones": "Nicho habilitado con características especiales"
-}
-```
-
-**Respuesta:**
-```json
-{
-  "id_nicho": "uuid",
-  "fila": 1,
-  "columna": 1,
-  "tipo": "Nicho",
-  "num_huecos": 2,
-  "estadoVenta": "Disponible",
-  "fecha_construccion": "2024-01-15",
-  "observaciones": "...",
-  "bloque": {
-    "id_bloque": "uuid",
-    "nombre": "Bloque A",
-    "numero": 1
-  },
-  "cementerio": {
-    "id_cementerio": "uuid",
-    "nombre": "Cementerio Central"
-  },
-  "huecos": [
-    {
-      "id_detalle_hueco": "uuid",
-      "num_hueco": 1,
-      "estado": "Disponible"
-    },
-    {
-      "id_detalle_hueco": "uuid",
-      "num_hueco": 2,
-      "estado": "Disponible"
-    }
-  ],
-  "mensaje": "Nicho habilitado correctamente con 2 huecos"
-}
-```
-
-### 3. Flujo de Venta
-
-#### 3.1. Reservar Nicho (Solo nichos DISPONIBLES)
+#### 2.1. Reservar Nicho (Solo nichos DISPONIBLES)
 
 **POST /nicho-sales/reservar**
 
@@ -193,7 +127,7 @@ Para habilitar un nicho deshabilitado de un mausoleo:
 - Genera orden de pago
 - Retorna PDF del recibo
 
-#### 3.2. Confirmar Venta
+#### 2.2. Confirmar Venta
 
 **PATCH /nicho-sales/confirmar-venta**
 
@@ -208,7 +142,7 @@ Para habilitar un nicho deshabilitado de un mausoleo:
 - Cambia estado del nicho a `VENDIDO`
 - Indica siguiente paso: registrar propietario
 
-#### 3.3. Registrar Propietario
+#### 2.3. Registrar Propietario
 
 **POST /nicho-sales/registrar-propietario/:idNicho/:idPersona**
 
@@ -347,20 +281,18 @@ Cancelar una reserva (solo si el pago no ha sido confirmado)
 
 ### Tipos de Bloque
 
-| Tipo | Descripción | Estado Inicial Nichos | Huecos Iniciales |
-|------|-------------|----------------------|------------------|
-| **Bloque** | Bloques estándar de nichos | `DISPONIBLE` | 1 hueco por nicho |
-| **Mausoleo** | Estructuras familiares personalizables | `DESHABILITADO` | Ninguno (crear al habilitar) |
+| Tipo | Descripción | Estado Inicial Nichos | Huecos Iniciales | Tipo de Venta |
+|------|-------------|----------------------|------------------|---------------|
+| **Bloque** | Bloques estándar | `DISPONIBLE` | 1 hueco por nicho | Individual |
+| **Mausoleo** | Estructuras familiares | `DISPONIBLE` | 1 hueco por nicho | Conjunta |
 
-### Tipos de Nichos
+### Tipo de Nicho Automático
 
-| Tipo | Descripción | Huecos típicos | Cuándo se asigna |
-|------|-------------|----------------|------------------|
-| **Nicho Simple** | Nicho individual estándar | 1 | Automático en bloques tipo "Bloque" |
-| **Nicho** | Nicho estándar doble | 1-2 | Al habilitar mausoleos |
-| **Mausoleo** | Estructura familiar grande | 4-8 | Al habilitar mausoleos |
-| **Fosa** | Tumba en tierra | 1 | Al habilitar mausoleos |
-| **Bóveda** | Estructura subterránea familiar | 2-6 | Al habilitar mausoleos |
+| Tipo | Descripción | Huecos | Cuándo se asigna |
+|------|-------------|--------|------------------|
+| **Nicho Simple** | Nicho individual estándar | 1 | Automático en todos los bloques |
+
+**Nota:** Todos los nichos se crean con tipo "Nicho Simple" y 1 hueco disponible, independientemente del tipo de bloque.
 
 ## Relaciones
 
@@ -394,7 +326,7 @@ El módulo de ventas se integra con el módulo de pagos:
 
 ## Ejemplo de Flujo Completo
 
-### Flujo para Bloque Tipo "Bloque" (Nichos habilitados automáticamente)
+### Flujo para Bloque (Venta Individual)
 
 ```bash
 # 1. Crear bloque tipo "Bloque" (los nichos se crean automáticamente DISPONIBLES)
@@ -407,9 +339,9 @@ POST /bloques
   "tipo_bloque": "Bloque"
 }
 # Resultado: 50 nichos creados en estado DISPONIBLE con 1 hueco cada uno
-# ✅ Listos para vender inmediatamente
+# ✅ Venta individual por nicho
 
-# 2. Reservar nicho (sin necesidad de habilitar)
+# 2. Reservar nicho individual
 POST /nicho-sales/reservar
 {
   "idNicho": "uuid",
@@ -435,6 +367,19 @@ POST /nicho-sales/registrar-propietario/{id-nicho}/{id-persona}
   "tipoDocumento": "cedula",
   "numeroDocumento": "1234567890"
 }
+}
+# Propiedad legal registrada
+
+# 6. Realizar inhumación (cuando sea necesario)
+POST /inhumaciones
+{
+  "id_nicho": "uuid",
+  "id_hueco": "uuid",
+  "id_fallecido": "uuid",
+  ...
+}
+# Hueco pasa a estado "ocupado"
+```}
 # Propiedad legal registrada
 
 # 6. Realizar inhumación (cuando sea necesario)
@@ -448,10 +393,10 @@ POST /inhumaciones
 # Hueco pasa a estado "ocupado"
 ```
 
-### Flujo para Bloque Tipo "Mausoleo" (Nichos deshabilitados)
+### Flujo para Mausoleo (Venta Conjunta)
 
 ```bash
-# 1. Crear bloque tipo "Mausoleo" (los nichos se crean DESHABILITADOS)
+# 1. Crear mausoleo (los nichos se crean automáticamente DISPONIBLES)
 POST /bloques
 {
   "id_cementerio": "uuid",
@@ -460,42 +405,45 @@ POST /bloques
   "numero_columnas": 3,
   "tipo_bloque": "Mausoleo"
 }
-# Resultado: 6 nichos creados en estado DESHABILITADO sin huecos
-# ⚠️ Requieren habilitación antes de vender
+# Resultado: 6 nichos creados en estado DISPONIBLE con 1 hueco cada uno
+# 🏛️ Venta conjunta con un solo comprobante
 
-# Resultado: 6 nichos creados en estado DESHABILITADO sin huecos
-# ⚠️ Requieren habilitación antes de vender
-
-# 2. Habilitar nicho específico con características personalizadas
-POST /nichos/{id-nicho}/habilitar
+# 2. Reservar TODOS los nichos del mausoleo con una sola transacción
+POST /nicho-sales/reservar-mausoleo
 {
-  "tipo": "Mausoleo",
-  "num_huecos": 6
+  "idBloque": "uuid-del-mausoleo",
+  "idPersona": "uuid-cliente",
+  "monto": 3000.00,  // Precio por todo el mausoleo
+  "generadoPor": "admin@cemetery.com"
 }
-# Estado: DESHABILITADO → DISPONIBLE
-# Se crean 6 huecos disponibles
+# Estado de todos los nichos: DISPONIBLE → RESERVADO
+# Se genera UN SOLO PDF del recibo
 
-# 3-6. Mismo flujo de venta que bloques tipo "Bloque"
-# (Reservar → Confirmar → Registrar propietario → Inhumación)
+# 3-6. Mismo flujo que bloques individuales
+# (Finanzas valida → Confirmar → Registrar propietario → Inhumaciones)
 ```
 
 ## Consideraciones Especiales
 
 ### Diferencias entre Bloques y Mausoleos
 
-**Bloques tipo "Bloque":**
-- ✅ Nichos listos para vender inmediatamente
-- ✅ 1 hueco por nicho (estándar)
-- ✅ Proceso más ágil y rápido
-- ✅ Ideal para cementerios con alta rotación
-- ✅ `fecha_adquisicion` se establece automáticamente
+**Ambos tipos crean nichos idénticos:**
+- ✅ Nichos DISPONIBLES desde la creación
+- ✅ 1 hueco por nicho
+- ✅ `fecha_adquisicion` establecida automáticamente
+- ✅ Listos para vender inmediatamente
 
-**Bloques tipo "Mausoleo":**
-- ⚙️ Nichos personalizables antes de vender
-- ⚙️ Número de huecos configurable
-- ⚙️ Tipos de nicho variados (Mausoleo, Bóveda, etc.)
-- ⚙️ Ideal para estructuras familiares
-- ⚙️ Mayor flexibilidad en configuración
+**Diferencia en el proceso de venta:**
+
+**Bloques:**
+- 💵 Venta individual por nicho
+- 💵 Cada nicho genera su propio comprobante
+- 💵 Flexibilidad para vender nichos independientes
+
+**Mausoleos:**
+- 🏛️ Venta conjunta de todos los nichos
+- 🏛️ Un solo comprobante para todo el conjunto
+- 🏛️ Ideal para estructuras familiares
 
 ### Nichos sin Bloque
 Es posible crear nichos manualmente sin asociarlos a un bloque (casos especiales como tumbas históricas o temporales).
@@ -509,10 +457,10 @@ Al buscar nichos disponibles, el sistema automáticamente asigna el primer bloqu
 ### Estados No Reversibles
 El flujo de estados es unidireccional:
 ```
-Para Bloques:
 DISPONIBLE → RESERVADO → VENDIDO
+```
 
-Para Mausoleos:
+Solo la cancelación de reservas permite regresar de RESERVADO a DISPONIBLE.
 DESHABILITADO → DISPONIBLE → RESERVADO → VENDIDO
 ```
 
