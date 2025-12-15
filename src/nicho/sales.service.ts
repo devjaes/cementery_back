@@ -1135,6 +1135,12 @@ async confirmarVentaNicho(confirmarVentaDto: ConfirmarVentaNichoDto) {
     razon: string = 'Compra de mausoleo',
   ) {
     try {
+      // Validación básica de entrada para evitar valores nulos en la BD
+      if (!idPersona || !tipoDocumento || !numeroDocumento) {
+        throw new BadRequestException(
+          'Faltan datos requeridos: idPersona, tipoDocumento y numeroDocumento son obligatorios',
+        );
+      }
       // 1. Verificar que el bloque existe y es un mausoleo
       const bloque = await this.bloqueRepository.findOne({
         where: { id_bloque: idBloque },
