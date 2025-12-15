@@ -2,6 +2,7 @@ import {
   Injectable,
   NotFoundException,
   InternalServerErrorException,
+  BadRequestException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -53,6 +54,12 @@ export class PropietariosNichosService {
       if (!persona) {
         throw new NotFoundException(
           `Persona with id ${dto.id_persona.id_persona} not found`,
+        );
+      }
+      // Validar campos requeridos para evitar constraint violations
+      if (!dto.numero_documento || !dto.tipo_documento || !dto.fecha_adquisicion) {
+        throw new BadRequestException(
+          'Campos requeridos faltantes: numero_documento, tipo_documento y fecha_adquisicion',
         );
       }
       // No permitir asignar propietario a fallecido
