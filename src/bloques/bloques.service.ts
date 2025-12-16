@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { CreateBloqueDto } from './dto/create-bloque.dto';
 import { UpdateBloqueDto } from './dto/update-bloque.dto';
+import { AmpliarBloqueDto } from './dto/ampliar-bloque.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Bloque } from './entities/bloque.entity';
 import { Cementerio } from 'src/cementerio/entities/cementerio.entity';
@@ -44,7 +45,7 @@ export class BloquesService {
 
       // Verifica si ya existe un bloque con el mismo nombre en el cementerio (solo activos)
       const existente = await this.bloqueRepository.findOne({
-        where: { 
+        where: {
           nombre: createBloqueDto.nombre,
           id_cementerio: createBloqueDto.id_cementerio,
           estado: Not('Inactivo'), // Solo verificar contra bloques activos
@@ -58,7 +59,7 @@ export class BloquesService {
 
       // Obtener el siguiente número disponible para el cementerio
       const bloquesDelCementerio = await this.bloqueRepository.find({
-        where: { 
+        where: {
           id_cementerio: createBloqueDto.id_cementerio,
         },
         order: { numero: 'DESC' },
@@ -70,7 +71,7 @@ export class BloquesService {
         const numerosValidos = bloquesDelCementerio
           .map(b => b.numero)
           .filter(n => n != null && !isNaN(n));
-        
+
         if (numerosValidos.length > 0) {
           siguienteNumero = Math.max(...numerosValidos) + 1;
         }
@@ -120,7 +121,7 @@ export class BloquesService {
       // Crear nichos automáticamente según filas y columnas
       // Ambos tipos (Bloque y Mausoleo) crean nichos DISPONIBLES con 1 hueco
       const nichos: Nicho[] = [];
-      
+
       for (let fila = 1; fila <= savedBloque.numero_filas; fila++) {
         for (let columna = 1; columna <= savedBloque.numero_columnas; columna++) {
           const fechaCreacion = new Date().toISOString();
@@ -135,7 +136,7 @@ export class BloquesService {
           nicho.tipo = 'Nicho Simple';
           nicho.fecha_construccion = fechaCreacion;
           nicho.fecha_adquisicion = fechaCreacion;
-          
+
           nichos.push(nicho);
         }
       }
@@ -158,7 +159,7 @@ export class BloquesService {
         ? `Mausoleo creado con ${nichosCreados.length} nichos habilitados (1 hueco cada uno). Venta conjunta habilitada.`
         : `Bloque creado con ${nichosCreados.length} nichos habilitados (1 hueco cada uno)`;
 
-      return { 
+      return {
         bloque: {
           ...savedBloque,
           tipo_bloque: savedBloque.tipo_bloque,
@@ -174,12 +175,12 @@ export class BloquesService {
       // Preparar debug para devolver en la respuesta y facilitar la depuración
       const debugInfo: any = {};
       try {
-        debugInfo.typeof_id_cementerio = typeof ( ( (this as any).bloque )?.id_cementerio || ( ({} as any) ).id_cementerio );
+        debugInfo.typeof_id_cementerio = typeof (((this as any).bloque)?.id_cementerio || (({} as any)).id_cementerio);
       } catch (e) {
         debugInfo.typeof_id_cementerio = 'unknown';
       }
       try {
-        debugInfo.raw_id_cementerio = ( ( (this as any).bloque )?.id_cementerio ) || ( ({} as any) ).id_cementerio;
+        debugInfo.raw_id_cementerio = (((this as any).bloque)?.id_cementerio) || (({} as any)).id_cementerio;
       } catch (e) {
         debugInfo.raw_id_cementerio = null;
       }
@@ -221,7 +222,7 @@ export class BloquesService {
   async findByCementerio(id_cementerio: string) {
     try {
       const bloques = await this.bloqueRepository.find({
-        where: { 
+        where: {
           id_cementerio: id_cementerio,
           estado: Not('Inactivo'), // Solo bloques activos
         },
@@ -246,7 +247,7 @@ export class BloquesService {
   async findOne(id: string) {
     try {
       const bloque = await this.bloqueRepository.findOne({
-        where: { 
+        where: {
           id_bloque: id,
           estado: Not('Inactivo'), // Solo bloques activos
         },
@@ -256,7 +257,7 @@ export class BloquesService {
         throw new NotFoundException('Bloque no encontrado o inactivo');
       }
       // Incluir tipo_bloque en la respuesta
-      return { 
+      return {
         bloque: {
           ...bloque,
           tipo_bloque: bloque.tipo_bloque || 'Bloque',
@@ -278,7 +279,7 @@ export class BloquesService {
   async update(id: string, updateBloqueDto: UpdateBloqueDto) {
     try {
       const bloque = await this.bloqueRepository.findOne({
-        where: { 
+        where: {
           id_bloque: id,
           estado: Not('Inactivo'), // Solo actualizar bloques activos
         },
@@ -289,7 +290,7 @@ export class BloquesService {
       }
 
       let cementerio = bloque.cementerio;
-      
+
       // Si se está actualizando el cementerio, verificar que exista
       if (updateBloqueDto.id_cementerio) {
         const nuevoCementerio = await this.cementerioRepository.findOne({
@@ -304,7 +305,7 @@ export class BloquesService {
       // Verifica si hay conflicto de nombres en el mismo cementerio (solo activos)
       if (updateBloqueDto.nombre) {
         const existente = await this.bloqueRepository.findOne({
-          where: { 
+          where: {
             nombre: updateBloqueDto.nombre,
             id_cementerio: cementerio.id_cementerio,
             estado: Not('Inactivo'), // Solo verificar contra bloques activos
@@ -328,7 +329,7 @@ export class BloquesService {
         bloque.cementerio = cementerio as any;
         try {
           (bloque as any).id_cementerio = cementerio.id_cementerio;
-        } catch (e) {}
+        } catch (e) { }
         await this.bloqueRepository.save(bloque);
       }
 
@@ -353,7 +354,7 @@ export class BloquesService {
   async remove(id: string) {
     try {
       const bloque = await this.bloqueRepository.findOne({
-        where: { 
+        where: {
           id_bloque: id,
           estado: Not('Inactivo'), // Solo eliminar bloques activos
         },
@@ -393,7 +394,7 @@ export class BloquesService {
   async search(nombre: string) {
     try {
       const bloques = await this.bloqueRepository.find({
-        where: { 
+        where: {
           nombre: Like(`%${nombre}%`),
           estado: Not('Inactivo'), // Solo buscar bloques activos
         },
@@ -413,7 +414,7 @@ export class BloquesService {
   async findNichosByBloque(id_bloque: string) {
     try {
       const bloque = await this.bloqueRepository.findOne({
-        where: { 
+        where: {
           id_bloque: id_bloque,
           estado: Not('Inactivo'),
         },
@@ -425,7 +426,7 @@ export class BloquesService {
           'nichos.inhumaciones',
         ],
       });
-      
+
       if (!bloque) {
         throw new NotFoundException('Bloque no encontrado o inactivo');
       }
@@ -457,6 +458,184 @@ export class BloquesService {
       }
       throw new InternalServerErrorException(
         'Error al obtener los nichos del bloque: ' + (error.message || error),
+      );
+    }
+  }
+
+  /**
+   * Amplía un mausoleo agregando nuevas filas de nichos
+   * Solo permite crecimiento vertical (las columnas deben coincidir con el original)
+   */
+  async ampliarBloque(
+    id_bloque: string,
+    ampliarBloqueDto: AmpliarBloqueDto,
+    file: Express.Multer.File,
+  ) {
+    try {
+      // Validar que se haya enviado el archivo PDF
+      if (!file) {
+        throw new BadRequestException(
+          'Se requiere un archivo PDF de ampliación (file)',
+        );
+      }
+      if (file.mimetype !== 'application/pdf') {
+        throw new BadRequestException('Solo se permiten archivos PDF');
+      }
+
+      // Buscar el bloque con sus nichos
+      const bloque = await this.bloqueRepository.findOne({
+        where: {
+          id_bloque: id_bloque,
+          estado: Not('Inactivo'),
+        },
+        relations: ['cementerio', 'nichos'],
+      });
+
+      if (!bloque) {
+        throw new NotFoundException('Bloque no encontrado o inactivo');
+      }
+
+      // Validar que sea un mausoleo
+      if (bloque.tipo_bloque !== 'Mausoleo') {
+        throw new BadRequestException(
+          'Solo se pueden ampliar bloques de tipo Mausoleo',
+        );
+      }
+
+      // Validar que el número de columnas coincida con el original
+      if (ampliarBloqueDto.numero_columnas !== bloque.numero_columnas) {
+        throw new BadRequestException(
+          `El número de columnas debe coincidir con el original (${bloque.numero_columnas}). La ampliación solo permite crecimiento vertical.`,
+        );
+      }
+
+      // Guardar archivo en uploads/ampliaciones
+      const { promises: fs } = await import('fs');
+      const path = await import('path');
+      const year = new Date().getFullYear();
+      const codigoAmpliacion = `AMP-${year}-${Date.now()}`;
+      const uploadPath = path.join(
+        process.cwd(),
+        'uploads',
+        'ampliaciones',
+        codigoAmpliacion,
+      );
+
+      try {
+        await fs.mkdir(uploadPath, { recursive: true });
+      } catch (error) {
+        throw new BadRequestException('Error al crear directorio para PDF');
+      }
+
+      const timestamp = Date.now();
+      const ext = path.extname(file.originalname) || '.pdf';
+      const filename = `ampliacion_${timestamp}${ext}`;
+      const filePath = path.join(uploadPath, filename);
+
+      try {
+        await fs.writeFile(filePath, file.buffer);
+      } catch (error) {
+        throw new BadRequestException('Error al guardar el archivo PDF');
+      }
+
+      const relativePath = `/uploads/ampliaciones/${codigoAmpliacion}/${filename}`;
+
+      // Obtener el último número de nicho existente
+      const nichosActivos = bloque.nichos.filter((n) => n.estado === 'Activo');
+      let ultimoNumero = 0;
+
+      if (nichosActivos.length > 0) {
+        // Buscar el número más alto entre los nichos existentes
+        nichosActivos.forEach((nicho) => {
+          if (nicho.numero) {
+            const num = parseInt(nicho.numero, 10);
+            if (!isNaN(num) && num > ultimoNumero) {
+              ultimoNumero = num;
+            }
+          }
+        });
+      }
+
+      // Calcular las nuevas filas
+      const filaInicial = bloque.numero_filas + 1;
+      const filaFinal = bloque.numero_filas + ampliarBloqueDto.numero_filas;
+
+      // Crear los nuevos nichos
+      const nuevosNichos: Nicho[] = [];
+      let numeroActual = ultimoNumero + 1;
+
+      for (let fila = filaInicial; fila <= filaFinal; fila++) {
+        for (let columna = 1; columna <= bloque.numero_columnas; columna++) {
+          const fechaCreacion = new Date().toISOString();
+          const nicho = this.nichoRepository.create();
+          nicho.id_bloque = bloque as any;
+          nicho.id_cementerio = bloque.cementerio as any;
+          nicho.fila = fila;
+          nicho.columna = columna;
+          nicho.numero = numeroActual.toString();
+          nicho.estado = 'Activo';
+          nicho.estadoVenta = EstadoNicho.DISPONIBLE;
+          nicho.num_huecos = 1;
+          nicho.tipo = 'Nicho Simple';
+          nicho.fecha_construccion = fechaCreacion;
+          nicho.fecha_adquisicion = fechaCreacion;
+          nicho.observacion_ampliacion = ampliarBloqueDto.observacion_ampliacion;
+          nicho.pdf_ampliacion = relativePath;
+
+          nuevosNichos.push(nicho);
+          numeroActual++;
+        }
+      }
+
+      // Guardar los nuevos nichos
+      const nichosCreados = await this.nichoRepository.save(nuevosNichos);
+
+      // Crear los huecos para los nuevos nichos
+      const nuevosHuecos: HuecosNicho[] = [];
+      for (const nicho of nichosCreados) {
+        const hueco = this.huecosNichoRepository.create({
+          id_nicho: nicho,
+          num_hueco: 1,
+          estado: 'Disponible',
+        });
+        nuevosHuecos.push(hueco);
+      }
+      const huecosCreados = await this.huecosNichoRepository.save(nuevosHuecos);
+
+      // Actualizar el número de filas del bloque
+      bloque.numero_filas = filaFinal;
+      bloque.fecha_modificacion = new Date().toISOString();
+      await this.bloqueRepository.save(bloque);
+
+      return {
+        mensaje: 'Mausoleo ampliado exitosamente',
+        bloque: {
+          id_bloque: bloque.id_bloque,
+          nombre: bloque.nombre,
+          numero_filas_anterior: filaInicial - 1,
+          numero_filas_nuevo: bloque.numero_filas,
+          numero_columnas: bloque.numero_columnas,
+        },
+        ampliacion: {
+          filas_agregadas: ampliarBloqueDto.numero_filas,
+          nichos_creados: nichosCreados.length,
+          huecos_creados: huecosCreados.length,
+          rango_numeros: `${ultimoNumero + 1} - ${numeroActual - 1}`,
+          observacion: ampliarBloqueDto.observacion_ampliacion,
+          pdf: relativePath,
+          codigo_ampliacion: codigoAmpliacion,
+        },
+        total_nichos_bloque: nichosActivos.length + nichosCreados.length,
+      };
+    } catch (error) {
+      if (
+        error instanceof NotFoundException ||
+        error instanceof BadRequestException
+      ) {
+        throw error;
+      }
+      throw new InternalServerErrorException(
+        'Error al ampliar el mausoleo: ' + (error.message || error),
       );
     }
   }
