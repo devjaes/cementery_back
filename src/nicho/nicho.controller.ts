@@ -9,11 +9,15 @@ import {
   Patch,
   UseGuards,
   Query,
+  UseInterceptors,
+  UploadedFile,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { NichoService } from './nicho.service';
 import { CreateNichoDto } from './dto/create-nicho.dto';
 import { UpdateNichoDto } from './dto/update-nicho.dto';
 import { HabilitarNichoDto } from './dto/habilitar-nicho.dto';
+import { AmpliarMausoleoDto } from './dto/ampliar-mausoleo.dto';
 import { TipoNicho } from './enum/tipoNicho.enum';
 import {
   ApiTags,
@@ -22,12 +26,13 @@ import {
   ApiParam,
   ApiResponse,
   ApiQuery,
+  ApiConsumes,
 } from '@nestjs/swagger';
 
 @ApiTags('nichos')
 @Controller('nichos')
 export class NichosController {
-  constructor(private readonly nichosService: NichoService) {}
+  constructor(private readonly nichosService: NichoService) { }
 
   @Post()
   @ApiOperation({
@@ -206,5 +211,53 @@ export class NichosController {
   @ApiResponse({ status: 404, description: 'Nicho no encontrado' })
   remove(@Param('id') id: string) {
     return this.nichosService.remove(id);
+  }
+
+  @Post('mausoleo/:id_bloque/ampliar')
+  @UseInterceptors(FileInterceptor('file'))
+  @ApiConsumes('multipart/form-data')
+  @ApiOperation({ summary: 'Ampliar un mausoleo agregando nuevas filas de nichos' })
+  @ApiParam({
+    name: 'id_bloque',
+    description: 'ID del bloque/mausoleo a ampliar',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+  })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      required: ['numero_filas', 'numero_columnas', 'observacion_ampliacion', 'file'],
+      properties: {
+        numero_filas: {
+          type: 'integer',
+          description: 'Número de filas a agregar',
+          example: 2,
+        },
+        numero_columnas: {
+          type: 'integer',
+          description: 'Número de columnas (debe coincidir con el original)',
+          example: 3,
+        },
+        observacion_ampliacion: {
+          type: 'string',
+          description: 'Observación sobre la ampliación',
+          example: 'Ampliación autorizada por resolución municipal',
+        },
+        file: {
+          type: 'string',
+          format: 'binary',
+          description: 'Archivo PDF de la autorización (obligatorio)',
+        },
+      },
+    },
+  })
+  @ApiResponse({ status: 200, description: 'Mausoleo ampliado exitosamente' })
+  @ApiResponse({ status: 400, description: 'Datos inválidos o bloque no es mausoleo' })
+  @ApiResponse({ status: 404, description: 'Bloque no encontrado' })
+  ampliarMausoleo(
+    @Param('id_bloque') id_bloque: string,
+    @Body() ampliarDto: AmpliarMausoleoDto,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    return this.nichosService.ampliarMausoleo(id_bloque, ampliarDto, file);
   }
 }

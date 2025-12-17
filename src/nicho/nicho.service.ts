@@ -30,7 +30,7 @@ export class NichoService {
     private readonly nichoPropietarioRepository: Repository<PropietarioNicho>,
     @InjectRepository(Bloque)
     private readonly bloqueRepository: Repository<Bloque>,
-  ) {}
+  ) { }
 
   /**
    * Crea un nuevo nicho y sus huecos asociados
@@ -400,7 +400,7 @@ export class NichoService {
       if (error instanceof NotFoundException) throw error;
       throw new InternalServerErrorException(
         'Error al buscar los propietarios del nicho: ' +
-          (error.message || error),
+        (error.message || error),
       );
     }
   }
@@ -516,7 +516,7 @@ export class NichoService {
       if (error instanceof NotFoundException) throw error;
       throw new InternalServerErrorException(
         'Error al buscar los nichos por término de búsqueda: ' +
-          (error.message || error),
+        (error.message || error),
       );
     }
   }
@@ -550,7 +550,7 @@ export class NichoService {
       if (error instanceof NotFoundException) throw error;
       throw new InternalServerErrorException(
         'Error al buscar los nichos por cédula del fallecido: ' +
-          (error.message || error),
+        (error.message || error),
       );
     }
   }
@@ -564,5 +564,174 @@ export class NichoService {
       .normalize('NFD')
       .replace(/[\u0300-\u036f]/g, '')
       .trim();
+  }
+
+  /**
+   * Amplía un mausoleo agregando nuevas filas de nichos
+   * Usa SQL raw para evitar problemas con TypeORM
+   */
+  async ampliarMausoleo(
+    id_bloque: string,
+    ampliarDto: any,
+    file: Express.Multer.File,
+  ) {
+    try {
+      // Convertir valores a números
+      const numeroFilas = parseInt(ampliarDto.numero_filas, 10);
+      const numeroColumnas = parseInt(ampliarDto.numero_columnas, 10);
+
+      // Validar PDF
+      if (!file || file.mimetype !== 'application/pdf') {
+        throw new BadRequestException('Debe proporcionar un archivo PDF válido');
+      }
+
+      // Obtener bloque
+      const bloque = await this.bloqueRepository.findOne({
+        where: { id_bloque, estado: Not('Inactivo') },
+        relations: ['cementerio'],
+      });
+
+      if (!bloque) {
+        throw new NotFoundException('Bloque no encontrado');
+      }
+
+      if (bloque.tipo_bloque !== 'Mausoleo') {
+        throw new BadRequestException('Solo se pueden ampliar bloques de tipo Mausoleo');
+      }
+
+      if (numeroColumnas !== bloque.numero_columnas) {
+        throw new BadRequestException(
+          `El número de columnas debe coincidir con el original (${bloque.numero_columnas})`,
+        );
+      }
+
+      // Guardar PDF
+      const { promises: fs } = await import('fs');
+      const path = await import('path');
+      const codigoAmpliacion = `AMP-${new Date().getFullYear()}-${Date.now()}`;
+      const uploadPath = path.join(process.cwd(), 'uploads', 'ampliaciones', codigoAmpliacion);
+
+      await fs.mkdir(uploadPath, { recursive: true });
+      const filename = `ampliacion_${Date.now()}.pdf`;
+      const filePath = path.join(uploadPath, filename);
+      await fs.writeFile(filePath, file.buffer);
+      const relativePath = `/uploads/ampliaciones/${codigoAmpliacion}/${filename}`;
+
+      // Obtener último número de nicho
+      const ultimoNichoResult = await this.nichoRepository.query(
+        `SELECT COALESCE(MAX(CAST(numero AS INTEGER)), 0) as max_numero 
+         FROM nichos 
+         WHERE id_bloque = $1 AND estado = 'Activo'`,
+        [id_bloque]
+      );
+      const ultimoNumero = parseInt(ultimoNichoResult[0]?.max_numero || '0', 10);
+
+      // Calcular filas
+      const filaInicial = bloque.numero_filas + 1;
+      const filaFinal = bloque.numero_filas + numeroFilas;
+
+      // Insertar nichos usando SQL RAW
+      const nichosValues: string[] = [];
+      const nichosParams: any[] = [];
+      let paramIndex = 1;
+      let numeroActual = ultimoNumero + 1;
+
+      for (let fila = filaInicial; fila <= filaFinal; fila++) {
+        for (let columna = 1; columna <= bloque.numero_columnas; columna++) {
+          const fechaCreacion = new Date().toISOString();
+
+          nichosValues.push(
+            `($${paramIndex}, $${paramIndex + 1}, $${paramIndex + 2}, $${paramIndex + 3}, $${paramIndex + 4}, $${paramIndex + 5}, $${paramIndex + 6}, $${paramIndex + 7}, $${paramIndex + 8}, $${paramIndex + 9}, $${paramIndex + 10})`
+          );
+
+          nichosParams.push(
+            fila,                                    // fila
+            columna,                                 // columna
+            numeroActual.toString(),                 // numero
+            'Activo',                                // estado
+            'Disponible',                            // estadoVenta
+            1,                                       // num_huecos
+            'Nicho Simple',                          // tipo
+            fechaCreacion,                           // fecha_construccion
+            fechaCreacion,                           // fecha_adquisicion
+            ampliarDto.observacion_ampliacion,       // observacion_ampliacion
+            relativePath,                            // pdf_ampliacion
+          );
+
+          paramIndex += 11;
+          numeroActual++;
+        }
+      }
+
+      // Ejecutar INSERT con id_bloque e id_cementerio
+      const insertSQL = `
+        INSERT INTO nichos (
+          fila, columna, numero, estado, "estadoVenta", num_huecos, tipo,
+          fecha_construccion, fecha_adquisicion, observacion_ampliacion, pdf_ampliacion,
+          id_bloque, id_cementerio
+        ) VALUES ${nichosValues.map((v, i) => {
+        const baseIndex = i * 11;
+        return `($${baseIndex + 1}, $${baseIndex + 2}, $${baseIndex + 3}, $${baseIndex + 4}, $${baseIndex + 5}, $${baseIndex + 6}, $${baseIndex + 7}, $${baseIndex + 8}, $${baseIndex + 9}, $${baseIndex + 10}, $${baseIndex + 11}, $${paramIndex}, $${paramIndex + 1})`;
+      }).join(', ')}
+        RETURNING id_nicho
+      `;
+
+      nichosParams.push(id_bloque, bloque.cementerio.id_cementerio);
+
+      console.log('[NICHO SERVICE] Ejecutando INSERT directo');
+      const insertResult = await this.nichoRepository.query(insertSQL, nichosParams);
+      console.log('[NICHO SERVICE] Nichos insertados:', insertResult.length);
+
+      // Crear huecos
+      const huecosValues = insertResult.map((r: any, i: number) =>
+        `($${i * 3 + 1}, $${i * 3 + 2}, $${i * 3 + 3})`
+      ).join(', ');
+
+      const huecosParams: any[] = [];
+      insertResult.forEach((r: any) => {
+        huecosParams.push(r.id_nicho, 1, 'Disponible');
+      });
+
+      await this.nichoRepository.query(
+        `INSERT INTO huecos_nichos (id_nicho, num_hueco, estado) VALUES ${huecosValues}`,
+        huecosParams
+      );
+
+      // Actualizar bloque
+      await this.bloqueRepository.query(
+        `UPDATE "Bloque" SET numero_filas = $1, fecha_modificacion = $2 WHERE id_bloque = $3`,
+        [filaFinal, new Date().toISOString(), id_bloque]
+      );
+
+      return {
+        mensaje: 'Mausoleo ampliado exitosamente',
+        bloque: {
+          id_bloque: bloque.id_bloque,
+          nombre: bloque.nombre,
+          numero_filas_anterior: bloque.numero_filas,
+          numero_filas_nuevo: filaFinal,
+          numero_columnas: bloque.numero_columnas,
+        },
+        ampliacion: {
+          filas_agregadas: numeroFilas,
+          nichos_creados: insertResult.length,
+          huecos_creados: insertResult.length,
+          rango_numeros: `${ultimoNumero + 1} - ${numeroActual - 1}`,
+          observacion: ampliarDto.observacion_ampliacion,
+          pdf: relativePath,
+          codigo_ampliacion: codigoAmpliacion,
+        },
+      };
+    } catch (error) {
+      if (
+        error instanceof NotFoundException ||
+        error instanceof BadRequestException
+      ) {
+        throw error;
+      }
+      throw new InternalServerErrorException(
+        'Error al ampliar el mausoleo: ' + (error.message || error),
+      );
+    }
   }
 }
