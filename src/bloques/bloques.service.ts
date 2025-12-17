@@ -44,7 +44,7 @@ export class BloquesService {
 
       // Verifica si ya existe un bloque con el mismo nombre en el cementerio (solo activos)
       const existente = await this.bloqueRepository.findOne({
-        where: { 
+        where: {
           nombre: createBloqueDto.nombre,
           id_cementerio: createBloqueDto.id_cementerio,
           estado: Not('Inactivo'), // Solo verificar contra bloques activos
@@ -58,7 +58,7 @@ export class BloquesService {
 
       // Obtener el siguiente número disponible para el cementerio
       const bloquesDelCementerio = await this.bloqueRepository.find({
-        where: { 
+        where: {
           id_cementerio: createBloqueDto.id_cementerio,
         },
         order: { numero: 'DESC' },
@@ -70,7 +70,7 @@ export class BloquesService {
         const numerosValidos = bloquesDelCementerio
           .map(b => b.numero)
           .filter(n => n != null && !isNaN(n));
-        
+
         if (numerosValidos.length > 0) {
           siguienteNumero = Math.max(...numerosValidos) + 1;
         }
@@ -120,7 +120,7 @@ export class BloquesService {
       // Crear nichos automáticamente según filas y columnas
       // Ambos tipos (Bloque y Mausoleo) crean nichos DISPONIBLES con 1 hueco
       const nichos: Nicho[] = [];
-      
+
       for (let fila = 1; fila <= savedBloque.numero_filas; fila++) {
         for (let columna = 1; columna <= savedBloque.numero_columnas; columna++) {
           const fechaCreacion = new Date().toISOString();
@@ -135,7 +135,7 @@ export class BloquesService {
           nicho.tipo = 'Nicho Simple';
           nicho.fecha_construccion = fechaCreacion;
           nicho.fecha_adquisicion = fechaCreacion;
-          
+
           nichos.push(nicho);
         }
       }
@@ -158,7 +158,7 @@ export class BloquesService {
         ? `Mausoleo creado con ${nichosCreados.length} nichos habilitados (1 hueco cada uno). Venta conjunta habilitada.`
         : `Bloque creado con ${nichosCreados.length} nichos habilitados (1 hueco cada uno)`;
 
-      return { 
+      return {
         bloque: {
           ...savedBloque,
           tipo_bloque: savedBloque.tipo_bloque,
@@ -174,12 +174,12 @@ export class BloquesService {
       // Preparar debug para devolver en la respuesta y facilitar la depuración
       const debugInfo: any = {};
       try {
-        debugInfo.typeof_id_cementerio = typeof ( ( (this as any).bloque )?.id_cementerio || ( ({} as any) ).id_cementerio );
+        debugInfo.typeof_id_cementerio = typeof (((this as any).bloque)?.id_cementerio || (({} as any)).id_cementerio);
       } catch (e) {
         debugInfo.typeof_id_cementerio = 'unknown';
       }
       try {
-        debugInfo.raw_id_cementerio = ( ( (this as any).bloque )?.id_cementerio ) || ( ({} as any) ).id_cementerio;
+        debugInfo.raw_id_cementerio = (((this as any).bloque)?.id_cementerio) || (({} as any)).id_cementerio;
       } catch (e) {
         debugInfo.raw_id_cementerio = null;
       }
@@ -221,7 +221,7 @@ export class BloquesService {
   async findByCementerio(id_cementerio: string) {
     try {
       const bloques = await this.bloqueRepository.find({
-        where: { 
+        where: {
           id_cementerio: id_cementerio,
           estado: Not('Inactivo'), // Solo bloques activos
         },
@@ -246,7 +246,7 @@ export class BloquesService {
   async findOne(id: string) {
     try {
       const bloque = await this.bloqueRepository.findOne({
-        where: { 
+        where: {
           id_bloque: id,
           estado: Not('Inactivo'), // Solo bloques activos
         },
@@ -256,7 +256,7 @@ export class BloquesService {
         throw new NotFoundException('Bloque no encontrado o inactivo');
       }
       // Incluir tipo_bloque en la respuesta
-      return { 
+      return {
         bloque: {
           ...bloque,
           tipo_bloque: bloque.tipo_bloque || 'Bloque',
@@ -278,7 +278,7 @@ export class BloquesService {
   async update(id: string, updateBloqueDto: UpdateBloqueDto) {
     try {
       const bloque = await this.bloqueRepository.findOne({
-        where: { 
+        where: {
           id_bloque: id,
           estado: Not('Inactivo'), // Solo actualizar bloques activos
         },
@@ -289,7 +289,7 @@ export class BloquesService {
       }
 
       let cementerio = bloque.cementerio;
-      
+
       // Si se está actualizando el cementerio, verificar que exista
       if (updateBloqueDto.id_cementerio) {
         const nuevoCementerio = await this.cementerioRepository.findOne({
@@ -304,7 +304,7 @@ export class BloquesService {
       // Verifica si hay conflicto de nombres en el mismo cementerio (solo activos)
       if (updateBloqueDto.nombre) {
         const existente = await this.bloqueRepository.findOne({
-          where: { 
+          where: {
             nombre: updateBloqueDto.nombre,
             id_cementerio: cementerio.id_cementerio,
             estado: Not('Inactivo'), // Solo verificar contra bloques activos
@@ -328,7 +328,7 @@ export class BloquesService {
         bloque.cementerio = cementerio as any;
         try {
           (bloque as any).id_cementerio = cementerio.id_cementerio;
-        } catch (e) {}
+        } catch (e) { }
         await this.bloqueRepository.save(bloque);
       }
 
@@ -353,7 +353,7 @@ export class BloquesService {
   async remove(id: string) {
     try {
       const bloque = await this.bloqueRepository.findOne({
-        where: { 
+        where: {
           id_bloque: id,
           estado: Not('Inactivo'), // Solo eliminar bloques activos
         },
@@ -393,7 +393,7 @@ export class BloquesService {
   async search(nombre: string) {
     try {
       const bloques = await this.bloqueRepository.find({
-        where: { 
+        where: {
           nombre: Like(`%${nombre}%`),
           estado: Not('Inactivo'), // Solo buscar bloques activos
         },
@@ -413,7 +413,7 @@ export class BloquesService {
   async findNichosByBloque(id_bloque: string) {
     try {
       const bloque = await this.bloqueRepository.findOne({
-        where: { 
+        where: {
           id_bloque: id_bloque,
           estado: Not('Inactivo'),
         },
@@ -425,7 +425,7 @@ export class BloquesService {
           'nichos.inhumaciones',
         ],
       });
-      
+
       if (!bloque) {
         throw new NotFoundException('Bloque no encontrado o inactivo');
       }
@@ -460,4 +460,5 @@ export class BloquesService {
       );
     }
   }
+
 }

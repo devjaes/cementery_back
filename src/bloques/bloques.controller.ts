@@ -25,13 +25,14 @@ import {
   ApiForbiddenResponse,
   ApiUnauthorizedResponse,
   ApiBadRequestResponse,
+  ApiConsumes,
 } from '@nestjs/swagger';
 
 @ApiBearerAuth()
 @ApiTags('Bloques')
 @Controller('bloques')
 export class BloquesController {
-  constructor(private readonly bloquesService: BloquesService) {}
+  constructor(private readonly bloquesService: BloquesService) { }
 
   @Post()
   @ApiOperation({ summary: 'Crear nuevo bloque' })

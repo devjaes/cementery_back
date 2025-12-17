@@ -74,6 +74,12 @@ export class Nicho {
   @Column({ type: 'text', nullable: true })
   observaciones?: string;
 
+  @Column({ type: 'text', nullable: true })
+  observacion_ampliacion?: string;
+
+  @Column({ type: 'varchar', length: 500, nullable: true })
+  pdf_ampliacion?: string;
+
   @CreateDateColumn({ type: 'varchar' })
   fecha_creacion: string;
 
