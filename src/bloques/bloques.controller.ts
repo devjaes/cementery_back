@@ -8,12 +8,9 @@ import {
   Delete,
   Query,
 } from '@nestjs/common';
-import { FileInterceptor } from '@nestjs/platform-express';
-import { UploadedFile, UseInterceptors } from '@nestjs/common';
 import { BloquesService } from './bloques.service';
 import { CreateBloqueDto } from './dto/create-bloque.dto';
 import { UpdateBloqueDto } from './dto/update-bloque.dto';
-import { AmpliarBloqueDto } from './dto/ampliar-bloque.dto';
 import {
   ApiTags,
   ApiOperation,
@@ -96,90 +93,6 @@ export class BloquesController {
   @ApiUnauthorizedResponse({ description: 'No autorizado' })
   findOne(@Param('id') id: string) {
     return this.bloquesService.findOne(id);
-  }
-
-  @Post(':id/ampliar-bloque')
-  @ApiOperation({
-    summary: 'Ampliar un mausoleo agregando nuevas filas de nichos',
-    description:
-      'Permite ampliar un bloque tipo Mausoleo de forma vertical. Solo se agregan filas, el número de columnas debe coincidir con el original. Requiere un archivo PDF obligatorio.',
-  })
-  @ApiConsumes('multipart/form-data')
-  @UseInterceptors(FileInterceptor('file'))
-  @ApiParam({
-    name: 'id',
-    description: 'ID del bloque (mausoleo) a ampliar',
-    example: '123e4567-e89b-12d3-a456-426614174000',
-  })
-  @ApiBody({
-    description: 'Datos de ampliación con PDF obligatorio',
-    schema: {
-      type: 'object',
-      properties: {
-        numero_filas: {
-          type: 'integer',
-          minimum: 1,
-          description: 'Número de filas a agregar',
-          example: 2,
-        },
-        numero_columnas: {
-          type: 'integer',
-          minimum: 1,
-          description: 'Número de columnas (debe coincidir con el original)',
-          example: 3,
-        },
-        observacion_ampliacion: {
-          type: 'string',
-          maxLength: 1000,
-          description: 'Observación sobre la ampliación',
-          example: 'Ampliación autorizada por la familia, construcción fase 2',
-        },
-        file: {
-          type: 'string',
-          format: 'binary',
-          description: 'PDF de ampliación (obligatorio)',
-        },
-      },
-      required: ['numero_filas', 'numero_columnas', 'observacion_ampliacion', 'file'],
-    },
-  })
-  @ApiOkResponse({
-    description: 'Mausoleo ampliado exitosamente',
-    schema: {
-      example: {
-        mensaje: 'Mausoleo ampliado exitosamente',
-        bloque: {
-          id_bloque: '123e4567-e89b-12d3-a456-426614174000',
-          nombre: 'Mausoleo Familiar García',
-          numero_filas_anterior: 3,
-          numero_filas_nuevo: 5,
-          numero_columnas: 3,
-        },
-        ampliacion: {
-          filas_agregadas: 2,
-          nichos_creados: 6,
-          huecos_creados: 6,
-          rango_numeros: '10 - 15',
-          observacion: 'Ampliación autorizada por la familia',
-          pdf: '/uploads/ampliaciones/AMP-2024-1702745123456/ampliacion_1702745123456.pdf',
-          codigo_ampliacion: 'AMP-2024-1702745123456',
-        },
-        total_nichos_bloque: 15,
-      },
-    },
-  })
-  @ApiBadRequestResponse({
-    description:
-      'El bloque no es un mausoleo, el número de columnas no coincide, falta el archivo PDF o el archivo no es un PDF válido',
-  })
-  @ApiNotFoundResponse({ description: 'Bloque no encontrado' })
-  @ApiUnauthorizedResponse({ description: 'No autorizado' })
-  ampliarBloque(
-    @Param('id') id: string,
-    @Body() ampliarBloqueDto: AmpliarBloqueDto,
-    @UploadedFile() file: Express.Multer.File,
-  ) {
-    return this.bloquesService.ampliarBloque(id, ampliarBloqueDto, file);
   }
 
   @Patch(':id')
