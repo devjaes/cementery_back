@@ -25,13 +25,14 @@ import {
   ApiForbiddenResponse,
   ApiUnauthorizedResponse,
   ApiBadRequestResponse,
+  ApiConsumes,
 } from '@nestjs/swagger';
 
 @ApiBearerAuth()
 @ApiTags('Bloques')
 @Controller('bloques')
 export class BloquesController {
-  constructor(private readonly bloquesService: BloquesService) {}
+  constructor(private readonly bloquesService: BloquesService) { }
 
   @Post()
   @ApiOperation({ summary: 'Crear nuevo bloque' })
@@ -55,6 +56,15 @@ export class BloquesController {
     return this.bloquesService.findAll();
   }
 
+  @Get('search')
+  @ApiOperation({ summary: 'Buscar bloques por nombre' })
+  @ApiQuery({ name: 'nombre', description: 'Nombre del bloque a buscar' })
+  @ApiOkResponse({ description: 'Búsqueda realizada exitosamente' })
+  @ApiUnauthorizedResponse({ description: 'No autorizado' })
+  search(@Query('nombre') nombre: string) {
+    return this.bloquesService.search(nombre);
+  }
+
   @Get('cementerio/:id_cementerio')
   @ApiOperation({ summary: 'Obtener bloques por cementerio' })
   @ApiParam({ name: 'id_cementerio', description: 'ID del cementerio' })
@@ -65,13 +75,14 @@ export class BloquesController {
     return this.bloquesService.findByCementerio(id_cementerio);
   }
 
-  @Get('search')
-  @ApiOperation({ summary: 'Buscar bloques por nombre' })
-  @ApiQuery({ name: 'nombre', description: 'Nombre del bloque a buscar' })
-  @ApiOkResponse({ description: 'Búsqueda realizada exitosamente' })
+  @Get(':id/nichos')
+  @ApiOperation({ summary: 'Obtener nichos de un bloque' })
+  @ApiParam({ name: 'id', description: 'ID del bloque' })
+  @ApiOkResponse({ description: 'Nichos del bloque obtenidos exitosamente' })
+  @ApiNotFoundResponse({ description: 'Bloque no encontrado' })
   @ApiUnauthorizedResponse({ description: 'No autorizado' })
-  search(@Query('nombre') nombre: string) {
-    return this.bloquesService.search(nombre);
+  findNichosByBloque(@Param('id') id: string) {
+    return this.bloquesService.findNichosByBloque(id);
   }
 
   @Get(':id')

@@ -17,6 +17,7 @@ export class Payment {
       'burial',
       'exhumation',
       'niche_sale',
+      'mausoleum_sale',
       'tomb_improvement',
       'hole_extension',
     ],
@@ -26,6 +27,7 @@ export class Payment {
     | 'burial'
     | 'exhumation'
     | 'niche_sale'
+    | 'mausoleum_sale'
     | 'tomb_improvement'
     | 'hole_extension';
 
@@ -86,6 +88,13 @@ export class Payment {
     default: 'Sin dirección',
   })
   buyerDirection: string;
+
+  @Column({
+    type: 'varchar',
+    length: 255,
+    nullable: true,
+  })
+  deceasedName: string;
 
   @UpdateDateColumn({ type: 'timestamp' })
   updatedDate: Date;

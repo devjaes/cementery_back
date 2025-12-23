@@ -14,6 +14,7 @@ export class CreatePaymentDto {
     'burial',
     'exhumation',
     'niche_sale',
+    'mausoleum_sale',
     'tomb_improvement',
     'hole_extension',
   ])
@@ -22,6 +23,7 @@ export class CreatePaymentDto {
     | 'burial'
     | 'exhumation'
     | 'niche_sale'
+    | 'mausoleum_sale'
     | 'tomb_improvement'
     | 'hole_extension';
 
@@ -62,4 +64,8 @@ export class CreatePaymentDto {
   @IsString()
   @IsOptional()
   buyerDirection?: string;
+
+  @IsString()
+  @IsOptional()
+  deceasedName?: string;
 }

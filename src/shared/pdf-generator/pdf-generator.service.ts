@@ -1785,7 +1785,7 @@ export class PDFGeneratorService {
                                 margin: [0, 2, 0, 2],
                               },
                               {
-                                text: payment.buyerName || '',
+                                text: (payment.buyerName || '').toUpperCase(),
                                 fontSize: 9,
                                 margin: [0, 2, 0, 2],
                               },
@@ -1812,7 +1812,7 @@ export class PDFGeneratorService {
                                     margin: [0, 2, 0, 2],
                                   },
                                   {
-                                    text: payment.buyerDirection,
+                                    text: (payment.buyerDirection || '').toUpperCase(),
                                     fontSize: 9,
                                     margin: [0, 2, 0, 2],
                                   },
@@ -1840,10 +1840,11 @@ export class PDFGeneratorService {
                                 margin: [0, 2, 0, 2],
                               },
                               {
-                                text:
+                                text: (
                                   payment.observacion ||
                                   payment.observations ||
-                                  '',
+                                  ''
+                                ).toUpperCase(),
                                 fontSize: 9,
                                 margin: [0, 2, 0, 2],
                               },
@@ -1897,7 +1898,9 @@ export class PDFGeneratorService {
                             ],
                             [
                               {
-                                text: 'VENTA DE BOBEDAS Y SITIOS EN EL CEMENTERIO',
+                                text: payment.procedureType === 'burial'
+                                  ? `PAGO DE INHUMACION DE ${payment.deceasedName || 'N/D'}`.toUpperCase()
+                                  : 'VENTA DE BOBEDAS Y SITIOS EN EL CEMENTERIO',
                                 alignment: 'left',
                                 fontSize: 9,
                                 margin: [0, 4, 0, 4],
@@ -1948,7 +1951,7 @@ export class PDFGeneratorService {
                               {
                                 stack: [
                                   {
-                                    text: payment.buyerName || '',
+                                    text: (payment.buyerName || '').toUpperCase(),
                                     alignment: 'right',
                                     fontSize: 9,
                                     margin: [0, 0, 0, 2],

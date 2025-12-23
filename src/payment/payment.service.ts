@@ -10,12 +10,15 @@ import { CreatePaymentDto } from './dto/create-payment.dto';
 import { UpdatePaymentDto } from './dto/update-payment.dto';
 import { QueryPaymentDto } from './dto/query-payment.dto';
 import { PDFGeneratorService } from '../shared/pdf-generator/pdf-generator.service';
+import { Inhumacion } from '../inhumaciones/entities/inhumacion.entity';
 
 @Injectable()
 export class PaymentService {
   constructor(
     @InjectRepository(Payment)
     private readonly paymentRepository: Repository<Payment>,
+    @InjectRepository(Inhumacion)
+    private readonly inhumacionRepository: Repository<Inhumacion>,
     private readonly pdfGeneratorService: PDFGeneratorService,
   ) {}
 
@@ -190,6 +193,23 @@ export class PaymentService {
 
   async generateReceipt(id: string): Promise<string> {
     const payment = await this.findOne(id);
+
+    // For burial procedures, fetch the deceased name from the inhumacion
+    if (payment.procedureType === 'burial') {
+      try {
+        const inhumacion = await this.inhumacionRepository.findOne({
+          where: { id_inhumacion: payment.procedureId },
+          relations: ['id_fallecido'],
+        });
+
+        if (inhumacion && inhumacion.id_fallecido) {
+          payment.deceasedName = `${inhumacion.id_fallecido.nombres} ${inhumacion.id_fallecido.apellidos}`.trim();
+        }
+      } catch (error) {
+        console.error('Error fetching deceased name for burial receipt:', error);
+      }
+    }
+
     return await this.pdfGeneratorService.generarReciboPagoV2(payment);
   }
 }

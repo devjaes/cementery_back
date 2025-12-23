@@ -2,6 +2,7 @@ import { HuecosNicho } from 'src/huecos-nichos/entities/huecos-nicho.entity';
 import { Inhumacion } from 'src/inhumaciones/entities/inhumacion.entity';
 import { PropietarioNicho } from 'src/propietarios-nichos/entities/propietarios-nicho.entity';
 import { RequisitosInhumacion } from 'src/requisitos-inhumacion/entities/requisitos-inhumacion.entity';
+import { Mejora } from 'src/mejoras/entities/mejora.entity';
 import {
   Entity,
   PrimaryGeneratedColumn,
@@ -58,6 +59,12 @@ export class Persona {
 
   @OneToMany(() => HuecosNicho, (huecosNicho) => huecosNicho.id_fallecido)
   huecos_nichos: HuecosNicho[];
+
+  @OneToMany(() => Mejora, (mejora) => mejora.solicitante)
+  mejorasSolicitadas: Mejora[];
+
+  @OneToMany(() => Mejora, (mejora) => mejora.fallecido)
+  mejorasFallecido: Mejora[];
 
   @BeforeInsert()
   async setFechaCreacion() {
