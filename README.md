@@ -1,14 +1,14 @@
-# Cementerios — API
+# Cementerios - API
 
 > Backend for cemetery management system: niche lifecycle, ownership and inheritance, payments, burial procedures.
 
 ## Problem
 
-Cemeteries are not a CRUD domain. A single burial plot (niche) carries decades of state — sales, inheritance, exhumations, re-sales — and a single mistake can mean exhuming the wrong remains or selling a plot that was already inherited. The operator needed a system that **encoded the rules** rather than relying on a clerk's memory: who owns what, what state each niche is in, what must be true before a burial can be registered, and a full audit trail behind every transition.
+Cemeteries are not a CRUD domain. A single burial plot (niche) carries decades of state - sales, inheritance, exhumations, re-sales - and a single mistake can mean exhuming the wrong remains or selling a plot that was already inherited. The operator needed a system that **encoded the rules** rather than relying on a clerk's memory: who owns what, what state each niche is in, what must be true before a burial can be registered, and a full audit trail behind every transition.
 
 ## Approach
 
-Domain-driven module split — niches, blocks, owners, burials (`inhumaciones`), exhumations, payments, and reports are independent NestJS modules with their own entities and services. The niche entity carries an explicit state machine (`Disponible → Reservado → Vendido`, plus `Deshabilitado` and `Bloqueado` for administrative locks), and reversal paths exist for exhumation flows. Burial registration is gated by a validation chain (requisitos de inhumación) covering payment, documentation, and owner verification. Payments emit PDF receipts via `pdfmake` and store them in S3 alongside other domain documents. Blocks auto-generate their grid of niches at creation, and mausoleums are modeled as a family-unit ownership distinct from the per-niche regular block sale.
+Domain-driven module split - niches, blocks, owners, burials (`inhumaciones`), exhumations, payments, and reports are independent NestJS modules with their own entities and services. The niche entity carries an explicit state machine (`Disponible → Reservado → Vendido`, plus `Deshabilitado` and `Bloqueado` for administrative locks), and reversal paths exist for exhumation flows. Burial registration is gated by a validation chain (requisitos de inhumación) covering payment, documentation, and owner verification. Payments emit PDF receipts via `pdfmake` and store them in S3 alongside other domain documents. Blocks auto-generate their grid of niches at creation, and mausoleums are modeled as a family-unit ownership distinct from the per-niche regular block sale.
 
 ## Stack
 
@@ -28,9 +28,9 @@ Domain-driven module split — niches, blocks, owners, burials (`inhumaciones`),
 ## Highlights
 
 - **Niche state machine** with explicit transitions: `Disponible → Reservado → Vendido`, plus `Deshabilitado` and `Bloqueado` for administrative states; exhumation flows reverse sale state.
-- **Multi-owner ownership and inheritance** via the `propietarios-nichos` module — a niche can carry multiple co-owners and succession.
+- **Multi-owner ownership and inheritance** via the `propietarios-nichos` module - a niche can carry multiple co-owners and succession.
 - **Payment + PDF receipt pipeline**: receipts generated server-side with `pdfmake` and persisted to S3.
-- **Validation chain** (`requisitos-inhumacion`) gating burial registration — health clearance, payment status, and owner verification must pass before an `inhumacion` is accepted.
+- **Validation chain** (`requisitos-inhumacion`) gating burial registration - health clearance, payment status, and owner verification must pass before an `inhumacion` is accepted.
 - **Auto-generated block grids**: creating a block materializes its niches in the configured rows/columns layout.
 - **Mausoleums as family units**, distinct domain workflow from per-niche regular blocks (see `src/nicho/MAUSOLEO_WORKFLOW.md`).
 - **Reports module** for operational reporting across niches, payments, and burials.
@@ -70,7 +70,7 @@ yarn test:cov      # coverage
 
 ### Restoring a database backup
 
-See the original setup notes — `docker cp` a `.sql` dump into the `cementery-db-dev` container and `psql` it into the configured database.
+See the original setup notes - `docker cp` a `.sql` dump into the `cementery-db-dev` container and `psql` it into the configured database.
 
 ## Module map
 
@@ -100,6 +100,6 @@ See also `FRONTEND_INTEGRATION.md` for the API contract used by the Next.js fron
 
 ## Team & my role
 
-- **My role:** Tech Lead — technical direction, ceremonies, backlog and scope, integration gatekeeper (every PR merged through me). I worked on the backend alongside teammates.
-- **Team:** cross-functional — frontend, backend, and student interns (~6 people total).
+- **My role:** Tech Lead - technical direction, ceremonies, backlog and scope, integration gatekeeper (every PR merged through me). I worked on the backend alongside teammates.
+- **Team:** cross-functional - frontend, backend, and student interns (~6 people total).
 - **Frontend repo:** [devjaes/cementery_web](https://github.com/devjaes/cementery_web) (Next.js 15 + React 19).
